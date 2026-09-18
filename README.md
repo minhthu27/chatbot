@@ -1,4 +1,4 @@
-# Hệ thống RAG + Dữ liệu có cấu trúc — Chatbot tuyển sinh/nhân sự NEU
+# Hệ thống RAG + Dữ liệu có cấu trúc — NGHIÊN CỨU VÀ PHÁT TRIỂN CƠ CHẾ QUẢN TRỊ TRI THỨC NHẰM NÂNG CAO ĐỘ CHÍNH XÁC CHO HỆ THỐNG CHATBOT ĐẠI HỌC KINH TẾ QUỐC DÂN
 
 **Phát triển:** Nhóm P.Thảo, Minh Thu
 
