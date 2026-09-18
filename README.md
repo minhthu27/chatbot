@@ -12,28 +12,30 @@ tích hợp hệ thống vào môi trường sản xuất.
 Hệ thống gồm 2 luồng xử lý dữ liệu độc lập, hội tụ tại máy chủ chatbot:
 
 ```
-[PDF]              --pipeline_pdf.py-->        markdown/*.md
-[DOCX/DOC/TXT/MD]  --pipeline_docx_txt.py-->    --> chunks/*.json
-                                                        │
-                                          conflict_detection.py
-                                    (phát hiện xung đột nội dung RAG,
-                                     đối chiếu chéo với dữ liệu bảng)
-                                                        │
-                                              rebuild-index (embedding + FAISS)
-                                                        │
-[CSV/XLSX] --structured_data_pipeline.py--> tables/*.csv
-                 (dùng structured_conflict_detection.py
-                  làm lõi so khớp & đối chiếu)                │
-                                                        │       │
-                                          gọi /admin/reload-index
-                                                        ▼       ▼
-                                          ┌──────────────────────────┐
-                                          │        api8923.py        │
-                                          │  FAISS + BM25 + Multi-   │
-                                          │  EntityMatcher + agent   │
-                                          └──────────────────────────┘
-                                                        │
-                                                    POST /ask
+[PDF]              --pipeline_pdf.py------>   ┐
+                                              ├─> markdown/*.md ──> chunks/*.json
+[DOCX/DOC/TXT/MD]  --pipeline_docx_txt.py-->  ┘                            │
+                                                                           │
+                                                               conflict_detection.py
+                                                         (phát hiện xung đột nội dung RAG,
+                                                          đối chiếu chéo với dữ liệu bảng)
+                                                                           │
+                                                               rebuild-index (embedding + FAISS)
+                                                                           │
+[CSV/XLSX] --structured_data_pipeline.py--> tables/*.csv ──┐               │
+                 (dùng structured_conflict_detection.py    │               │
+                  làm lõi so khớp & đối chiếu)             │               │
+                                                           ▼               ▼
+                                                     gọi /admin/reload-index
+                                                           │
+                                                           ▼
+                                             ┌──────────────────────────┐
+                                             │        api8923.py        │
+                                             │  FAISS + BM25 + Multi-   │
+                                             │  EntityMatcher + agent   │
+                                             └──────────────────────────┘
+                                                           │
+                                                       POST /ask
 ```
 
 Sơ đồ nghiệp vụ chi tiết (upload → tiền xử lý → phát hiện xung đột → cập
@@ -199,41 +201,40 @@ chủ nào khác ngoài chính `admin_api.py`/`api8923.py` đã khai.
 
 ### Các tab chính
 
-- **💬 Chatbot**: khung hỏi-đáp thử trực tiếp với `api8923.py` (gọi `/ask`) —
+- **Chatbot**: khung hỏi-đáp thử trực tiếp với `api8923.py` (gọi `/ask`) —
   dùng để kiểm tra ngay câu trả lời sau khi cập nhật dữ liệu, không cần rời
   trang.
-- **📄 Tài liệu (RAG)**: upload PDF/DOCX/DOC/TXT/MD, chạy từng bước (OCR →
+- **Tài liệu (RAG)**: upload PDF/DOCX/DOC/TXT/MD, chạy từng bước (OCR →
   chuẩn bị Markdown → rà soát → kiểm tra xung đột), xem "Chờ kiểm tra xung
-  đột", và mục **🔀 Xung đột chéo với dữ liệu bảng** — nơi duyệt các trường
+  đột", và mục ** Xung đột chéo với dữ liệu bảng** — nơi duyệt các trường
   hợp văn bản mới mâu thuẫn với bảng cấu trúc (giữ đoạn / loại đoạn / sửa
   đoạn / sửa giá trị bảng theo văn bản), thay cho việc phải trả lời qua
   terminal.
-- **📊 Dữ liệu bảng**: upload `.csv`/`.xlsx`/`.xls`, kéo-thả chọn khóa
-  chính, bấm **🔍 Phân tích xung đột** để xem trước dữ liệu mới/trùng
+- **Dữ liệu bảng**: upload `.csv`/`.xlsx`/`.xls`, kéo-thả chọn khóa
+  chính, bấm **Phân tích xung đột** để xem trước dữ liệu mới/trùng
   lặp/thay đổi + cảnh báo chéo với RAG trước khi ghi thật vào production
   (bảng mới hoàn toàn sẽ hiện thêm form khai báo `description`/
-  `name_columns`/...). Mỗi bảng đã có, mở lên còn 2 nút: **🕐 Backup /
-  Khôi phục** (xem và khôi phục về bất kỳ bản backup tự động nào) và **⚙️
-  Cấu hình cho chatbot** (sửa lại toàn bộ field trong `registry.json` của
+  `name_columns`/...). Mỗi bảng đã có, mở lên còn 2 nút: **Backup /
+  Khôi phục** (xem và khôi phục về bất kỳ bản backup tự động nào) và **Cấu hình cho chatbot** (sửa lại toàn bộ field trong `registry.json` của
   bảng đó, kể cả `categorical_filters`).
-- **🧪 Test cases**: chạy các case định nghĩa sẵn trong `test_cases.json`
+- **Test cases**: chạy các case định nghĩa sẵn trong `test_cases.json`
   (nếu có), cùng 2 nút toàn cục ở đầu trang — xem mục 6c.
 
-### 📸 Snapshot / 🔄 Reset test (2 nút ở đầu mọi trang)
+### Snapshot / Reset test (2 nút ở đầu mọi trang)
 
-- **📸 Snapshot**: chụp lại TOÀN BỘ trạng thái có thể bị 1 lượt test làm
+- **Snapshot**: chụp lại TOÀN BỘ trạng thái có thể bị 1 lượt test làm
   thay đổi — chunks + manifest (phía văn bản) VÀ toàn bộ bảng `.csv` +
   `registry.json` (phía có cấu trúc) — vào 1 thư mục có nhãn/thời gian
   trong `data/processed/conflict/snapshots/`.
-- **🔄 Reset test**: tự tìm snapshot GẦN NHẤT và khôi phục lại TOÀN BỘ từ
+- **Reset test**: tự tìm snapshot GẦN NHẤT và khôi phục lại TOÀN BỘ từ
   đó (cả văn bản và bảng), rồi rebuild FAISS 1 lần. Nếu KHÔNG có snapshot
   nào (quên bấm Snapshot trước khi test), chỉ dọn được văn bản có tiền tố
   `test_` (tương đương lệnh `cleanup-test`) — bảng cấu trúc SẼ KHÔNG được
   hoàn tác, giao diện sẽ cảnh báo rõ điều này trong log.
 
-**Quy tắc vận hành:** LUÔN bấm 📸 Snapshot trước khi bắt đầu 1 lượt test,
+**Quy tắc vận hành:** LUÔN bấm Snapshot trước khi bắt đầu 1 lượt test,
 bất kể test loại dữ liệu nào (văn bản hay bảng) — đây là cách DUY NHẤT đảm
-bảo 🔄 Reset test đưa được cả bảng cấu trúc về đúng trạng thái ban đầu.
+bảo Reset test đưa được cả bảng cấu trúc về đúng trạng thái ban đầu.
 Snapshot cũ hơn không bị xóa tự động nên không sợ mất, xem toàn bộ bằng
 `python conflict_detection.py list-snapshots`.
 
@@ -263,18 +264,18 @@ nào ở mục 6b, các file này luôn được dọn đúng.
 **Các bước chạy 1 lượt test đầy đủ:**
 
 1. **📸 Snapshot** (đầu trang) — đặt nhãn dễ nhận, vd `truoc_test_<ngay>`.
-2. Vào tab **📄 Tài liệu (RAG)**, kéo-thả từng file trong `test_phi_cau_truc/*`
+2. Vào tab **Tài liệu (RAG)**, kéo-thả từng file trong `test_phi_cau_truc/*`
    vào khung upload, theo đúng thứ tự bạn muốn kiểm tra (khuyên chạy `v1`
    trước, `v2` sau, để thấy đúng bước phát hiện trùng lặp/xung đột với
-   chính `v1` vừa lên production) → "📝 Chi tiết" → chạy từng bước → "⚠️
+   chính `v1` vừa lên production) → "Chi tiết" → chạy từng bước → "
    Check" → xem đúng kết quả có khớp với tên thư mục không (vd `mau_thuan/`
    phải ra kết quả mâu thuẫn, không phải "trùng lặp").
-3. Vào tab **📊 Dữ liệu bảng**, upload `test_giangvien_change.csv`/
-   `test_nganh_change.csv`, chọn khóa chính, **🔍 Phân tích xung đột**, xem
-   đúng số dòng thay đổi/cảnh báo chéo, chọn quyết định, **✅ Áp dụng**.
-4. Vào tab **💬 Chatbot**, hỏi thử vài câu liên quan tới dữ liệu vừa test để
+3. Vào tab **Dữ liệu bảng**, upload `test_giangvien_change.csv`/
+   `test_nganh_change.csv`, chọn khóa chính, **Phân tích xung đột**, xem
+   đúng số dòng thay đổi/cảnh báo chéo, chọn quyết định, **Áp dụng**.
+4. Vào tab **Chatbot**, hỏi thử vài câu liên quan tới dữ liệu vừa test để
    xác nhận câu trả lời đúng như kỳ vọng.
-5. **🔄 Reset test** (đầu trang) — xác nhận log báo "đã khôi phục từ
+5. **Reset test** (đầu trang) — xác nhận log báo "đã khôi phục từ
    snapshot '...'" (không phải nhánh cảnh báo "KHÔNG tìm thấy snapshot").
 6. Hỏi lại đúng câu ở bước 4 lần nữa — câu trả lời phải trở về ĐÚNG như
    trước khi test (nếu vẫn nhắc tới nội dung/giá trị đã test ở bước 2-3,
