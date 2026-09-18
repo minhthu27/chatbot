@@ -1,0 +1,3046 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test hệ thống Chatbot NEU</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root{
+    --bg:#f5f7fa; --card:#fff; --border:#e1e8ed; --text:#2c3e50;
+    --muted:#7f8c8d; --primary:#3498db; --primary-hover:#2980b9;
+    --success:#27ae60; --warning:#f39c12; --danger:#e74c3c;
+    --code-bg:#1e293b; --code-text:#e2e8f0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       background:var(--bg);color:var(--text);line-height:1.5;font-size:14px}
+  header{background:#fff;border-bottom:1px solid var(--border);padding:12px 20px;
+         display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:10}
+  .brand{font-weight:600;font-size:16px}
+  .header-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .config-panel{font-size:13px;position:relative}
+  .config-panel summary{cursor:pointer;color:var(--primary);padding:4px 8px;list-style:none}
+  .config-panel summary::-webkit-details-marker{display:none}
+  .config-panel[open] summary{background:#ebf5fb;border-radius:4px}
+  .config-content{position:absolute;right:0;top:36px;background:#fff;border:1px solid var(--border);
+                  border-radius:8px;padding:14px;box-shadow:0 6px 16px rgba(0,0,0,.1);
+                  display:flex;flex-direction:column;gap:8px;min-width:400px;z-index:20}
+  .config-content label{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted)}
+  .config-content input{padding:5px 8px;border:1px solid var(--border);border-radius:4px;font-size:13px}
+  #conn-status{font-size:12px;color:var(--muted)}
+  nav{display:flex;gap:0;background:#fff;border-bottom:1px solid var(--border);padding:0 20px;overflow-x:auto}
+  .tab-btn{background:none;border:none;padding:12px 18px;cursor:pointer;color:var(--muted);
+           font-size:14px;border-bottom:3px solid transparent;white-space:nowrap}
+  .tab-btn:hover{color:var(--text);background:#f8fafc}
+  .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+  main{padding:20px;max-width:1400px;margin:0 auto}
+  .tab-pane{display:none}
+  .tab-pane.active{display:block}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:8px;
+        padding:16px 20px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .card h2{font-size:15px;margin-bottom:12px;color:var(--text);font-weight:600}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+  button{padding:7px 12px;border:1px solid var(--border);background:#fff;border-radius:5px;
+         cursor:pointer;font-size:13px;color:var(--text)}
+  button:hover{background:#f1f5f9}
+  button.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+  button.btn-primary:hover{background:var(--primary-hover)}
+  button.btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+  button.btn-danger:hover{background:#c0392b}
+  button.btn-success{background:var(--success);color:#fff;border-color:var(--success)}
+  button.btn-warn{background:var(--warning);color:#fff;border-color:var(--warning)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .dropzone{border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;
+            color:var(--muted);transition:all .15s;background:#fafbfc;cursor:pointer}
+  .dropzone.drag{border-color:var(--primary);background:#ebf5fb;color:var(--primary)}
+  .dropzone p{margin:4px 0}
+  .hint{font-size:12px;color:var(--muted)}
+  .link-label{color:var(--primary);text-decoration:underline;cursor:pointer}
+  .files-list{display:flex;flex-direction:column;gap:8px}
+  .file-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);
+            border-radius:6px;background:#fafbfc;flex-wrap:wrap;transition:.15s}
+  .file-row:hover{background:#f1f5f9}
+  .file-row .name{font-weight:600;min-width:200px;cursor:pointer;color:var(--primary)}
+  .file-row .name:hover{text-decoration:underline}
+  .file-row .type-badge{background:#e2e8f0;color:#475569;padding:1px 6px;border-radius:3px;
+                        font-size:11px;text-transform:uppercase}
+  .file-row .meta{font-size:11px;color:var(--muted)}
+  .status-badges{display:flex;gap:4px;flex-wrap:wrap}
+  .badge{padding:1px 6px;border-radius:3px;font-size:11px;background:#e2e8f0;color:#64748b}
+  .badge.ok{background:#d1fae5;color:#065f46}
+  .badge.prod{background:#dbeafe;color:#1e40af}
+  .badge.step{background:#fef3c7;color:#92400e}
+  .file-row .actions{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+  .file-row .actions button{padding:4px 10px;font-size:12px}
+  .output-block{background:var(--code-bg);color:var(--code-text);padding:12px;border-radius:6px;
+                font-family:"SFMono-Regular",Consolas,monospace;font-size:12px;
+                max-height:520px;overflow:auto;white-space:pre-wrap;word-break:break-word;
+                margin-top:8px;line-height:1.5}
+  .form-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+  .form-row label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+  .form-row input,.form-row select{padding:6px 8px;border:1px solid var(--border);
+                                   border-radius:5px;font-size:13px;min-width:180px}
+  .key-picker{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0}
+  .key-picker-col{flex:1;min-width:220px}
+  .key-picker-title{font-size:12px;color:var(--muted);margin-bottom:6px}
+  .chip-zone{display:flex;flex-wrap:wrap;gap:6px;min-height:44px;padding:8px;
+             border:2px dashed var(--border);border-radius:6px;background:#fafbfc;transition:.15s}
+  .chip-zone.chip-zone-key{border-color:var(--primary);background:#ebf5fb}
+  .chip-zone.drag-over{border-color:var(--success);background:#eafaf1}
+  .chip{padding:5px 10px;background:#fff;border:1px solid var(--border);border-radius:14px;
+        font-size:12px;cursor:grab;user-select:none;display:flex;align-items:center;gap:6px}
+  .chip:active{cursor:grabbing}
+  .chip.dragging{opacity:.4}
+  .chip:hover{border-color:var(--primary)}
+  .chip .chip-x{color:var(--muted);cursor:pointer;font-weight:700;line-height:1}
+  .chip.key-chip{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .chip.key-chip .chip-x{color:#fff}
+  .col-picker-group{margin-top:10px}
+  .col-picker-title{font-size:12px;font-weight:600;margin-bottom:4px}
+  .col-check{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:3px 8px;
+             border:1px solid var(--border);border-radius:12px;margin:2px;background:#fff;cursor:pointer}
+  .col-check input{margin:0}
+  .sample-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:6px;
+                     max-height:240px;margin-top:6px}
+  .sample-table-wrap table{border-collapse:collapse;font-size:12px;width:100%}
+  .sample-table-wrap th,.sample-table-wrap td{border:1px solid var(--border);padding:4px 8px;white-space:nowrap}
+  .sample-table-wrap th{background:#f1f5f9;position:sticky;top:0}
+  .decision-row{border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:8px;background:#fafbfc}
+  .decision-row .drow-title{font-weight:600;margin-bottom:6px}
+  .decision-row .drow-diff{font-size:12px;margin:2px 0;color:var(--text)}
+  .decision-row .old-val{color:var(--danger);text-decoration:line-through}
+  .decision-row .new-val{color:var(--success);font-weight:600}
+  .decision-btns{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .decision-btns button{font-size:12px;padding:4px 10px}
+  .decision-btns button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .decision-row textarea{width:100%;margin-top:8px;min-height:60px;font-family:inherit;font-size:12px;
+                         padding:6px 8px;border:1px solid var(--border);border-radius:5px}
+  .tables-list{display:flex;flex-direction:column;gap:6px}
+  .table-row{padding:10px 12px;background:#fafbfc;border:1px solid var(--border);border-radius:6px;cursor:pointer}
+  .table-row:hover{background:#f1f5f9;border-color:var(--primary)}
+  .table-row .tname{font-weight:600;color:var(--primary)}
+  .table-row .tmeta{font-size:12px;color:var(--muted);margin-top:2px}
+  .chat-container{background:#fff;border:1px solid var(--border);border-radius:8px;
+                  height:calc(100vh - 240px);display:flex;flex-direction:column;overflow:hidden}
+  .chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+  .msg{max-width:80%;padding:10px 14px;border-radius:12px;line-height:1.6;font-size:14px;word-wrap:break-word}
+  .msg.user{align-self:flex-end;background:var(--primary);color:#fff;border-bottom-right-radius:3px}
+  .msg.bot{align-self:flex-start;background:#f1f5f9;color:var(--text);border-bottom-left-radius:3px}
+  .msg.bot p{margin:6px 0}
+  .msg.bot table{border-collapse:collapse;margin:8px 0;font-size:13px}
+  .msg.bot th,.msg.bot td{border:1px solid var(--border);padding:4px 8px}
+  .msg.bot th{background:#e2e8f0}
+  .msg.bot code{background:#e2e8f0;padding:1px 4px;border-radius:3px;font-size:12px}
+  .msg.bot pre{background:var(--code-bg);color:var(--code-text);padding:8px;border-radius:4px;
+               overflow-x:auto;font-size:12px;margin:6px 0}
+  .msg-meta{font-size:11px;color:var(--muted);margin-top:4px}
+  .chat-input-form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:#fafbfc}
+  .chat-input-form textarea{flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:6px;
+                            resize:none;font-family:inherit;font-size:14px;max-height:120px}
+  .chat-info{display:flex;gap:8px;align-items:center;padding:6px 12px;border-top:1px solid var(--border);
+             background:#fff;font-size:11px;color:var(--muted)}
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,.15);
+           border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;
+           vertical-align:middle;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;
+                  display:flex;align-items:center;justify-content:center;padding:20px}
+  .modal{background:#fff;border-radius:8px;width:100%;max-width:1200px;max-height:92vh;
+         display:flex;flex-direction:column;overflow:hidden}
+  .modal-header{padding:12px 18px;border-bottom:1px solid var(--border);
+                display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .modal-header h3{font-size:15px;font-weight:600;word-break:break-word}
+  .modal-header .meta{font-size:12px;color:var(--muted)}
+  .modal-tabs{display:flex;gap:0;padding:0 18px;border-bottom:1px solid var(--border);background:#fafbfc}
+  .modal-tab{padding:9px 14px;background:none;border:none;border-bottom:3px solid transparent;
+             cursor:pointer;font-size:13px;color:var(--muted)}
+  .modal-tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+  .modal-tab:disabled{opacity:.35;cursor:not-allowed}
+  .modal-body{padding:16px 18px;overflow:auto;flex:1}
+  .modal-footer{padding:12px 18px;border-top:1px solid var(--border);
+                display:flex;gap:8px;justify-content:flex-end;align-items:center}
+  .modal textarea{width:100%;min-height:420px;font-family:"SFMono-Regular",Consolas,monospace;
+                  font-size:13px;padding:12px;border:1px solid var(--border);border-radius:6px;
+                  resize:vertical;line-height:1.5}
+  .modal .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:6px;max-height:520px}
+  .modal table{border-collapse:collapse;font-size:12px;width:100%}
+  .modal table th{background:#f1f5f9;padding:6px 10px;border:1px solid var(--border);
+                  position:sticky;top:0;text-align:left;font-weight:600;white-space:nowrap}
+  .modal table td{padding:4px 8px;border:1px solid var(--border);min-width:80px}
+  .modal table td[contenteditable]{outline:none}
+  .modal table td[contenteditable]:focus{background:#fff8e1;box-shadow:inset 0 0 0 2px var(--warning)}
+
+  .test-case-card{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;background:#fafbfc}
+  .test-case-card .tc-name{font-weight:600;margin-bottom:4px}
+  .test-case-card .tc-desc{font-size:12px;color:var(--muted);margin-bottom:6px}
+  .test-case-card .tc-steps{font-size:11px;color:var(--muted)}
+  .test-case-card .tc-actions{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+  .tc-step-block{margin-top:8px;border:1px solid var(--border);border-radius:6px;background:#fff;overflow:hidden}
+  .tc-step-block summary{padding:8px 12px;cursor:pointer;font-size:12px;font-weight:500;background:#fafbfc;list-style:none;display:flex;align-items:center;gap:8px}
+  .tc-step-block summary::-webkit-details-marker{display:none}
+  .tc-step-block summary::before{content:'▶';font-size:10px;color:var(--muted);transition:.15s}
+  .tc-step-block[open] summary::before{transform:rotate(90deg)}
+  .tc-step-block summary:hover{background:#f1f5f9}
+  .tc-step-body{padding:10px 14px;font-size:12.5px;font-family:"SFMono-Regular",Consolas,monospace;
+                white-space:pre-wrap;word-break:break-word;border-top:1px dashed var(--border);
+                background:#fff;max-height:340px;overflow:auto;line-height:1.55}
+  .tc-stdin{padding:6px 14px;background:#fef3c7;font-size:11.5px;font-family:"SFMono-Regular",Consolas,monospace;
+            border-top:1px dashed var(--border);color:#92400e}
+
+  .banner{padding:10px 14px;border-radius:6px;margin-bottom:12px;font-size:13px}
+  .banner-warn{background:#fef3c7;border:1px solid #fcd34d;color:#92400e}
+  .banner-info{background:#dbeafe;border:1px solid #93c5fd;color:#1e40af}
+  .banner-ok{background:#d1fae5;border:1px solid #6ee7b7;color:#065f46}
+  .banner-error{background:#fee2e2;border:1px solid #fca5a5;color:#991b1b}
+
+  .kv{display:grid;grid-template-columns:170px 1fr;gap:8px 14px;font-size:13.5px}
+  .kv dt{color:var(--muted);font-size:12px}
+  .kv dd{margin:0;font-family:"SFMono-Regular",Consolas,monospace;font-size:12.5px;word-break:break-word}
+
+  .stepper{display:flex;gap:4px;align-items:center;margin:10px 0 16px;flex-wrap:wrap}
+  .step{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;
+        font-size:12px;background:#f1f5f9;color:var(--muted);border:1px solid var(--border)}
+  .step.done{background:#d1fae5;color:#065f46;border-color:#6ee7b7}
+  .step.current{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .step-num{font-weight:600}
+  .step-arrow{color:var(--border);font-size:16px}
+
+  .chunk-list{display:flex;flex-direction:column;gap:8px}
+  .chunk-item{border:1px solid var(--border);border-radius:6px;background:#fafbfc;overflow:hidden}
+  .chunk-head{padding:8px 12px;cursor:pointer;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .chunk-head:hover{background:#f1f5f9}
+  .chunk-id{font-family:"SFMono-Regular",Consolas,monospace;font-size:11px;color:var(--muted)}
+  .chunk-meta{display:flex;gap:6px;flex-wrap:wrap;font-size:11px}
+  .chunk-meta span{background:#e2e8f0;padding:1px 6px;border-radius:3px;color:#475569}
+  .chunk-meta span.active{background:#d1fae5;color:#065f46}
+  .chunk-meta span.inactive{background:#fee2e2;color:#991b1b}
+  .chunk-content{padding:10px 14px;border-top:1px dashed var(--border);
+                 white-space:pre-wrap;word-break:break-word;font-size:13px;
+                 font-family:"SFMono-Regular",Consolas,monospace;background:#fff;display:none}
+  .chunk-stats{font-size:12px;color:var(--muted);margin-bottom:10px}
+
+  .step-actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+  .step-actions button{padding:9px 16px;font-size:13px}
+  .step-actions .primary-action{background:var(--primary);color:#fff;border-color:var(--primary);font-weight:600}
+  .step-actions .primary-action:hover{background:var(--primary-hover)}
+  /* [FIX] Nút "chạy lại" 1 bước ĐÃ xong (Generate/Chunk/Check...) - trước đây
+     KHÔNG tồn tại vì actionsHtml chỉ hiện đúng 1 nút cho next_step, nút biến
+     mất vĩnh viễn sau khi bước đó xong 1 lần -> không có cách sinh lại .md
+     sau khi sửa metadata, không có cách chunk lại sau khi sửa .md. */
+  .redo-actions{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 14px;padding-top:10px;border-top:1px dashed var(--border)}
+  .redo-actions-label{font-size:11.5px;color:var(--muted);width:100%;margin-bottom:2px}
+  .redo-actions button{padding:6px 12px;font-size:12px;color:#92400e;border-color:#fcd34d;background:#fffbeb}
+  .redo-actions button:hover{background:#fef3c7}
+  /* [FIX] Sửa chunk trực tiếp - trước đây .chunk-content chỉ là 1 div tĩnh,
+     không có ô sửa/nút lưu nào cả. */
+  .chunk-content-edit{width:100%;min-height:70px;padding:8px 10px;font-size:13px;
+     font-family:"SFMono-Regular",Consolas,monospace;border:1px solid var(--border);
+     border-radius:5px;resize:vertical;line-height:1.5;margin-top:6px}
+  .chunk-status-select{padding:2px 6px;font-size:11px;border-radius:3px;border:1px solid var(--border)}
+    /* Log panel — luôn hiển thị dưới tab content */
+  .fd-log-panel{
+    margin-top:16px;border:1px solid var(--border);border-radius:6px;overflow:hidden;
+    background:#fafbfc;
+  }
+  .fd-log-header{
+    padding:8px 12px;background:#f1f5f9;display:flex;align-items:center;
+    justify-content:space-between;gap:10px;font-size:12.5px;font-weight:500;
+  }
+  .fd-log-header .fd-log-status{
+    font-family:"SFMono-Regular",Consolas,monospace;font-size:11.5px;color:var(--muted);
+    display:flex;align-items:center;gap:6px;
+  }
+  .fd-log-header .fd-log-status.running{color:var(--primary)}
+  .fd-log-header .fd-log-status.done-ok{color:var(--success)}
+  .fd-log-header .fd-log-status.done-fail{color:var(--danger)}
+  .fd-log-panel pre{
+    margin:0;padding:10px 14px;max-height:260px;overflow:auto;
+    background:#1e293b;color:#e2e8f0;
+    font-family:"SFMono-Regular",Consolas,monospace;font-size:12px;
+    line-height:1.55;white-space:pre-wrap;word-break:break-word;
+  }
+  .fd-log-panel pre:empty::before{content:'(chưa có log)';color:#64748b}
+  .fd-log-toggle{
+    background:none;border:1px solid var(--border);padding:2px 8px;font-size:11px;
+    border-radius:3px;cursor:pointer;
+  }
+  .conflict-card{border:1px solid var(--border);border-radius:8px;margin-bottom:14px;overflow:hidden;background:#fff}
+  .conflict-header{padding:10px 14px;background:#fef3c7;font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .conflict-header .badge{background:#fff;border:1px solid #fcd34d;color:#92400e;padding:1px 6px;border-radius:3px;font-size:11px}
+  .conflict-tomtat{padding:8px 14px;font-size:12.5px;border-bottom:1px dashed var(--border);background:#fff}
+  .conflict-lydo{padding:8px 14px;font-size:12px;border-bottom:1px dashed var(--border);color:var(--muted);background:#fafbfc}
+  .conflict-cols{display:grid;grid-template-columns:1fr 1fr}
+  .conflict-col{padding:12px 14px;min-width:0;display:flex;flex-direction:column}
+  .conflict-col:first-child{border-right:1px solid var(--border);background:#fef9f3}
+  .conflict-col:last-child{background:#f0f9ff}
+  .conflict-col-head{font-weight:600;font-size:13px;margin-bottom:6px}
+  .conflict-col-meta{font-size:11.5px;color:var(--muted);margin-bottom:8px;display:flex;flex-direction:column;gap:2px}
+  .conflict-col-content{font-size:12.5px;font-family:"SFMono-Regular",Consolas,monospace;
+    white-space:pre-wrap;word-break:break-word;max-height:240px;overflow-y:auto;
+    padding:8px;background:rgba(255,255,255,.6);border-radius:4px;line-height:1.5;flex:1}
+  .conflict-actions{padding:10px 14px;display:flex;gap:8px;justify-content:flex-end;
+    background:#fafbfc;border-top:1px solid var(--border);flex-wrap:wrap}
+  .conflict-actions button{padding:7px 14px;font-size:13px;font-weight:500}
+  .btn-keep-old{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
+  .btn-keep-old.selected{background:#dc2626;color:#fff;border-color:#dc2626;box-shadow:0 0 0 2px #fecaca}
+  .btn-use-new{background:#d1fae5;border-color:#6ee7b7;color:#065f46}
+  .btn-use-new.selected{background:#059669;color:#fff;border-color:#059669;box-shadow:0 0 0 2px #a7f3d0}
+  .btn-keep-both{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
+  .btn-keep-both.selected{background:#2563eb;color:#fff;border-color:#2563eb;box-shadow:0 0 0 2px #bfdbfe}
+  .candidate-block{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:18px;background:#fff}
+  .candidate-head{padding-bottom:10px;margin-bottom:12px;border-bottom:1px dashed var(--border);
+    font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .candidate-head .badge{background:#e2e8f0;padding:1px 6px;border-radius:3px;font-size:11px;color:#475569}
+  .chunk-bulk-toolbar{display:flex;gap:10px;align-items:center;padding:8px 12px;
+  background:#f8fafc;border:1px solid var(--border);border-radius:6px;
+  margin-bottom:10px;flex-wrap:wrap;font-size:12.5px}
+  .chunk-bulk-toolbar label{display:flex;align-items:center;gap:6px;cursor:pointer}
+  .chunk-bulk-toolbar select{padding:5px 8px;font-size:12px;border:1px solid var(--border);
+  border-radius:4px;background:#fff}
+  .chunk-bulk-toolbar button{padding:6px 12px;font-size:12px}
+  .chunk-item .chunk-select{margin-right:8px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"> Test hệ thống Chatbot NEU</div>
+  <div class="header-actions">
+    <button class="btn-danger" onclick="resetAllTest()">🔄 Reset test</button>
+    <button onclick="takeSnapshot()">📸 Snapshot</button>
+    <details class="config-panel">
+      <summary>⚙️ Cấu hình</summary>
+      <div class="config-content">
+        <label>Chat API (api8923)<input id="cfg-chat-url" value="http://127.0.0.1:8923"></label>
+        <label>Admin API (admin_api)<input id="cfg-admin-url" value="http://127.0.0.1:8924"></label>
+        <label>API Key (X-API-Key)<input id="cfg-api-key" type="password"></label>
+        <div style="display:flex;gap:8px">
+          <button onclick="saveConfig()">💾 Lưu</button>
+          <button onclick="testConnections()">🔌 Test</button>
+        </div>
+        <div id="conn-status"></div>
+      </div>
+    </details>
+  </div>
+</header>
+
+<nav>
+  <button class="tab-btn active" data-tab="chat">💬 Chatbot</button>
+  <button class="tab-btn" data-tab="upload">📄 Tài liệu (RAG)</button>
+  <button class="tab-btn" data-tab="tables">📊 Dữ liệu bảng</button>
+  <button class="tab-btn" data-tab="test">🧪 Test cases</button>
+</nav>
+
+<main>
+
+<section id="tab-chat" class="tab-pane active">
+  <div class="chat-container">
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg bot">Chào bạn 👋 Hỏi thử: "Điểm chuẩn ngành Công nghệ thông tin năm 2025"</div>
+    </div>
+    <form class="chat-input-form" onsubmit="sendChat(event)">
+      <textarea id="chat-input" rows="1" placeholder="Nhập câu hỏi... (Enter gửi, Shift+Enter xuống dòng)"></textarea>
+      <button type="submit" id="chat-send-btn">Gửi</button>
+    </form>
+    <div class="chat-info">
+      <span>Session: <b id="session-id">(chưa có)</b></span>
+      <button onclick="resetSession()">🔄 Reset session</button>
+    </div>
+  </div>
+</section>
+
+<section id="tab-upload" class="tab-pane">
+  <div class="card">
+    <h2>📤 Upload tài liệu</h2>
+    <div class="dropzone" id="dropzone">
+      <p>Kéo thả file hoặc <label class="link-label">chọn file<input type="file" id="file-input" accept=".pdf,.docx,.doc,.txt,.md" hidden multiple></label></p>
+      <p class="hint">PDF · DOCX · DOC · TXT · MD</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2> Danh sách tài liệu <span class="hint">(mới nhất trên đầu)</span></h2>
+    <div class="banner banner-info">
+      <b>Quy trình:</b> ① Upload → ② Chuẩn bị Markdown → ③ Rà soát .md → ④ Kiểm tra xung đột → ⑤ Vào RAG.
+      <br><b> Xóa file:</b> nếu file đã ở RAG, hệ thống tự xóa chunks khỏi manifest + rebuild FAISS để chatbot không trả lời được nữa.
+    </div>
+    <div class="toolbar">
+      <button onclick="loadFiles()">🔄 Refresh</button>
+      <span class="hint" id="files-count"></span>
+    </div>
+    <div id="files-list" class="files-list"><p class="hint">(chưa load)</p></div>
+  </div>
+
+  <div class="card">
+    <h2> Output</h2>
+    <pre id="process-output" class="output-block">(chưa có output)</pre>
+  </div>
+  <div class="card">
+    <h2>🔀 Xung đột chéo với dữ liệu bảng <span class="hint">(phát hiện lúc kiểm tra xung đột văn bản)</span></h2>
+    <div class="banner banner-info">💡 Khi văn bản mới nói khác với bảng cấu trúc production, hệ thống ghi lại đây để bạn duyệt — KHÔNG tự sửa gì cả cho tới khi bạn xác nhận.</div>
+    <div class="toolbar">
+      <button onclick="loadPendingCrossConflicts()">🔄 Tải danh sách</button>
+      <span class="hint" id="pending-cross-count"></span>
+    </div>
+    <div id="pending-cross-list"><p class="hint">(chưa load)</p></div>
+  </div>
+</section>
+
+<section id="tab-tables" class="tab-pane">
+  <div class="card">
+    <h2> Bảng dữ liệu production</h2>
+    <div class="banner banner-info">💡 Click bảng để xem/sửa. Upload CSV/XLSX mới → so khớp theo khóa, phát hiện xung đột, admin xử lý từng dòng rồi mới ghi vào production.</div>
+    <div class="toolbar"><button onclick="loadTables()">🔄 Refresh</button></div>
+    <div id="tables-list" class="tables-list"><p class="hint">(chưa load)</p></div>
+  </div>
+
+  <div class="card">
+    <h2>📤 Upload CSV/XLSX (có phát hiện xung đột)</h2>
+    <div class="banner banner-info"> Chọn file → kéo-thả cột vào khung "Khóa chính" → <b>Phân tích xung đột</b> → hệ thống báo cáo đầy đủ để bạn duyệt <b>từng thay đổi</b> trước khi ghi vào production (không tự quyết định hàng loạt).</div>
+    <div class="form-row">
+      <label>File<input type="file" id="csv-file" accept=".csv,.xlsx,.xls"></label>
+      <label>Tên bảng<input id="table-name" list="existing-table-names" placeholder="vd: nganh, giangvien" autocomplete="off"></label>
+      <datalist id="existing-table-names"></datalist>
+    </div>
+    <div id="csv-preview-status" class="hint">(chưa chọn file)</div>
+    <div id="csv-key-picker" class="key-picker" style="display:none">
+      <div class="key-picker-col">
+        <div class="key-picker-title">Cột trong file <span class="hint">— kéo sang phải để chọn làm khóa</span></div>
+        <div id="csv-cols-available" class="chip-zone"></div>
+      </div>
+      <div class="key-picker-col">
+        <div class="key-picker-title">🔑 Khóa chính <span class="hint">— thả cột vào đây</span></div>
+        <div id="csv-cols-key" class="chip-zone chip-zone-key"></div>
+      </div>
+    </div>
+    <div id="csv-sample-wrap" style="display:none">
+      <div class="hint" style="margin-top:8px">Xem trước 10 dòng đầu:</div>
+      <div class="sample-table-wrap"><table id="csv-sample-table"></table></div>
+    </div>
+    <button onclick="analyzeStructuredUpload()" class="btn-primary" style="margin-top:10px">🔍 Phân tích xung đột</button>
+    <div style="margin:8px 0 4px"><span id="csv-analyze-status" class="hint">chưa chạy</span></div>
+    <pre id="csv-analyze-log" class="output-block" style="display:none">(chưa có log)</pre>
+
+    <div id="csv-review" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+      <div class="banner banner-ok" id="csv-review-summary"></div>
+      <div id="csv-review-warnings"></div>
+
+      <div id="csv-metadata-section" style="display:none">
+        <h3 style="font-size:14px;margin:10px 0 6px" id="csv-metadata-title">🆕 Bảng MỚI — khai báo để chatbot dùng được tốt</h3>
+        <div id="csvmeta-root"></div>
+      </div>
+
+      <div id="csv-thaydoi-section" style="display:none">
+        <h3 style="font-size:14px;margin:10px 0 6px">✏️ Các dòng có thay đổi — cần bạn xác nhận</h3>
+        <div class="toolbar">
+          <span class="hint">Áp dụng nhanh cho tất cả:</span>
+          <button onclick="bulkSetThayDoi('giu_moi')">Giữ bản mới (tất cả)</button>
+          <button onclick="bulkSetThayDoi('giu_cu')">Giữ bản cũ (tất cả)</button>
+          <button onclick="bulkSetThayDoi('giu_ca_2')">Giữ cả 2 (tất cả)</button>
+        </div>
+        <div id="csv-thaydoi-list" class="files-list"></div>
+      </div>
+
+      <div id="csv-cheo-section" style="display:none">
+        <h3 style="font-size:14px;margin:14px 0 6px">⚠️ Cảnh báo chéo với văn bản RAG — cần bạn xác nhận</h3>
+        <div id="csv-cheo-list" class="files-list"></div>
+      </div>
+
+      <button onclick="applyStructuredDecisions()" class="btn-primary" id="csv-apply-btn" style="margin-top:14px">✅ Áp dụng quyết định &amp; ghi vào production</button>
+      <div style="margin:8px 0 4px"><span id="csv-apply-status" class="hint"></span></div>
+      <pre id="csv-apply-log" class="output-block" style="display:none">(chưa có log)</pre>
+    </div>
+  </div>
+</section>
+
+<section id="tab-test" class="tab-pane">
+  <div class="card">
+    <h2> Chạy test case tự động</h2>
+    <div class="banner banner-warn">⚠️ Nên bấm <b>📸 Snapshot</b> trước khi test. Sau khi xong → <b>🔄 Reset test</b>.</div>
+    <div class="toolbar">
+      <button onclick="loadTestCases()">🔄 Load test cases</button>
+      <button onclick="loadPending()"> Refresh pending</button>
+      <button onclick="loadConflictStatus()"> Status</button>
+      <span class="hint" id="test-case-count"></span>
+    </div>
+    <div id="test-cases-list"><p class="hint">Bấm "Load test cases" để tải.</p></div>
+    <div id="pending-list" class="files-list" style="margin-top:14px"></div>
+  </div>
+
+  <div class="card">
+    <h2> Log tiến trình (streaming)</h2>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <span id="test-log-status" style="font-size:13px;color:var(--muted)">chưa chạy</span>
+      <button onclick="clearTestLog()" style="margin-left:auto;font-size:12px;padding:4px 10px">🗑️ Clear log</button>
+    </div>
+    <pre id="test-log" class="output-block" style="max-height:400px">(chưa có log)</pre>
+  </div>
+
+  <div class="card">
+    <h2> Output (kết quả tổng hợp)</h2>
+    <pre id="conflict-output" class="output-block">(chưa có output)</pre>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ============ CONFIG ============
+function getCfg(){
+  return {
+    chatUrl:  (localStorage.getItem('chatUrl')  || 'http://127.0.0.1:8923').replace(/\/$/,''),
+    adminUrl: (localStorage.getItem('adminUrl') || 'http://127.0.0.1:8924').replace(/\/$/,''),
+    apiKey:   localStorage.getItem('apiKey') || ''
+  };
+}
+function saveConfig(){
+  localStorage.setItem('chatUrl',  document.getElementById('cfg-chat-url').value.trim());
+  localStorage.setItem('adminUrl', document.getElementById('cfg-admin-url').value.trim());
+  localStorage.setItem('apiKey',   document.getElementById('cfg-api-key').value);
+  alert('Đã lưu cấu hình.');
+}
+function loadCfgToUI(){
+  const c = getCfg();
+  document.getElementById('cfg-chat-url').value  = c.chatUrl;
+  document.getElementById('cfg-admin-url').value = c.adminUrl;
+  document.getElementById('cfg-api-key').value   = c.apiKey;
+}
+async function testConnections(){
+  const c = getCfg(); const el = document.getElementById('conn-status');
+  el.innerHTML = '<span class="spinner"></span>Đang test...';
+  let msg = [];
+  try{ const r = await fetch(c.chatUrl + '/metadata');
+       msg.push(r.ok ? '✅ Chat OK' : '❌ Chat ' + r.status);
+  }catch(e){ msg.push('❌ Chat: ' + e.message); }
+  try{ const r = await fetch(c.adminUrl + '/admin/files', {headers:{'X-API-Key': c.apiKey}});
+       msg.push(r.ok ? '✅ Admin OK' : '❌ Admin ' + r.status);
+  }catch(e){ msg.push('❌ Admin: ' + e.message); }
+  el.textContent = msg.join('  |  ');
+}
+function escHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+// [MỚI] Nhãn có màu cho từng loại quan_he - đặc biệt tách "trung_lap" (xanh lá,
+// KHÔNG phải xung đột) ra khỏi "mau_thuan" (đỏ, xung đột thật) để Admin không
+// còn bị đánh lừa bởi 2 đoạn giống hệt nhau nhưng hiện nhãn đỏ như trước.
+const QUAN_HE_LABEL = {
+  trung_lap:               {text: '🟢 Trùng lặp / giống hệt',  color: '#065f46', bg: '#d1fae5'},
+  bo_sung:                 {text: '🔵 Bổ sung',                 color: '#1e40af', bg: '#dbeafe'},
+  khac_thoi_diem_pham_vi:  {text: '🟡 Khác thời điểm/phạm vi',  color: '#92400e', bg: '#fef3c7'},
+  khac_gia_tri:            {text: '🟠 Khác giá trị',            color: '#9a3412', bg: '#ffedd5'},
+  mau_thuan:               {text: '🔴 Mâu thuẫn',               color: '#991b1b', bg: '#fee2e2'},
+  khong_du_thong_tin:      {text: '⚪ Không đủ thông tin',       color: '#475569', bg: '#e2e8f0'},
+};
+function quanHeLabel(q){
+  const info = QUAN_HE_LABEL[q] || {text: escHtml(q || '?'), color: '#475569', bg: '#e2e8f0'};
+  return `<b style="background:${info.bg};color:${info.color};padding:2px 8px;border-radius:4px">${info.text}</b>`;
+}
+
+// ============ TABS ============
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'upload') loadFiles();
+    if(btn.dataset.tab === 'test')   { loadTestCases(); loadPending(); }
+    if(btn.dataset.tab === 'tables') loadTables();
+  };
+});
+
+// ============ MODAL ============
+function openModal({title, meta, bodyHtml, footerHtml, onReady}){
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <div class="modal-header">
+        <div><h3>${escHtml(title)}</h3>${meta ? `<div class="meta">${escHtml(meta)}</div>` : ''}</div>
+        <button class="btn-close" style="background:none;border:none;font-size:18px;cursor:pointer">✕</button>
+      </div>
+      <div class="modal-body">${bodyHtml}</div>
+      ${footerHtml ? `<div class="modal-footer">${footerHtml}</div>` : ''}
+    </div>`;
+  document.body.appendChild(backdrop);
+  backdrop.querySelector('.btn-close').onclick = () => backdrop.remove();
+  backdrop.addEventListener('click', e => { if(e.target === backdrop) backdrop.remove(); });
+  if(onReady) onReady(backdrop);
+  return backdrop;
+}
+
+// ============ EVENT DELEGATION — an toàn với mọi tên file ============
+// Mọi nút có tham số động đều dùng data-act + data-bn + data-ft.
+// Tránh nhúng tên file vào onclick string → không bị vỡ khi có dấu ", ', (, ),...
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-act]');
+  if(!btn) return;
+  const act = btn.dataset.act;
+  const bn  = btn.dataset.bn || '';
+  const ft  = btn.dataset.ft || '';
+  const stp = btn.dataset.step || '';
+  try{
+    if(act === 'open-detail')       await openFileDetail(bn, ft);
+    else if(act === 'start-step')   await startStepJob(bn, ft, stp, btn.dataset.redo === '1');
+    else if(act === 'check-conflict') await doCheckConflict(bn, ft);
+    else if(act === 'rag-in')       await doRagIn(bn, ft);
+    else if(act === 'delete-file')  await doDeleteFile(bn, ft);
+    else if(act === 'run-test-case') await runTestCase(btn.dataset.id);
+    else if(act === 'verify-test-case') verifyTestCase(btn.dataset.id);
+  } catch(err){ console.error(err); }
+});
+
+// ============ JOB STREAMING ============
+function setFdLog(txt){
+  const el = document.getElementById('fd-run-log');
+  if(el){ el.textContent = txt; el.scrollTop = el.scrollHeight; }
+}
+function getFdLog(){ return document.getElementById('fd-run-log')?.textContent || ''; }
+
+async function startStepJob(baseName, fileType, step, isRedo){
+  if(step === 'ocr' && !confirm('OCR dùng OpenAI API, có thể tốn vài phút. Tiếp tục?')) return;
+  // [FIX] Cảnh báo GHI ĐÈ khi bấm nút "🔁 chạy lại" (isRedo=true) - trước đây
+  // các bước này còn không có nút để bấm lại, nên chưa từng cần cảnh báo.
+  if(isRedo){
+    const warnText = {
+      ocr: 'OCR lại sẽ ghi đè .txt hiện tại.',
+      prepare: 'Prepare lại sẽ ghi đè _review.json hiện tại (mất chỉnh sửa metadata cũ nếu chưa lưu riêng).',
+      generate: 'Sinh lại .md sẽ GHI ĐÈ HOÀN TOÀN nội dung .md hiện tại theo metadata mới nhất (mất mọi sửa tay trong .md).',
+      finalize: 'Chunk lại sẽ ghi đè toàn bộ chunks.json hiện tại từ nội dung .md hiện tại (mất mọi sửa tay trực tiếp trong tab Chunks).',
+    }[step] || 'Hành động này sẽ ghi đè kết quả của bước đã chạy trước đó.';
+    if(!confirm(`⚠️ ${warnText}\nTiếp tục?`)) return;
+  }
+  const c = getCfg();
+  setFdLog('');
+  updateLogStatus('queued', null, step);
+  document.getElementById('fd-log-panel')?.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  let jobId;
+  try{
+    const r = await fetch(c.adminUrl + '/admin/start-step', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({base_name: baseName, file_type: fileType, step})
+    });
+    const data = await r.json();
+    if(!r.ok || !data.job_id){
+      setFdLog('❌ ' + (data.error || ('HTTP ' + r.status)));
+      updateLogStatus('done', false, step);
+      return;
+    }
+    jobId = data.job_id;
+  } catch(e){ setFdLog('❌ ' + e.message); updateLogStatus('done', false, step); return; }
+
+  let fromIdx = 0;
+  const allLines = [];
+
+  async function poll(){
+    try{
+      const r = await fetch(`${c.adminUrl}/admin/job/${jobId}?from=${fromIdx}`,
+                            {headers:{'X-API-Key': c.apiKey}});
+      if(!r.ok){
+        allLines.push(`[Polling lỗi: HTTP ${r.status}]`);
+        setFdLog(allLines.join('\n'));
+        return;
+      }
+      const data = await r.json();
+      if(data.log && data.log.length){
+        for(const ln of data.log) allLines.push(ln);
+        fromIdx = data.log_total;
+        setFdLog(allLines.join('\n'));
+      }
+      updateLogStatus(data.status, data.ok, step);
+
+      if(data.status === 'done'){
+        // Lưu log vào sessionStorage để restore sau khi reload modal
+        try {
+          sessionStorage.setItem('lastStepJob', JSON.stringify({
+            baseName, step, log: allLines, ok: data.ok, status: 'done'
+          }));
+        } catch(e){}
+
+        // Cập nhật step-status + auto-switch tab
+        if(data.ok) await refreshModalAfterStep(baseName, fileType, step);
+        return;
+      }
+      setTimeout(poll, 800);
+    } catch(e){
+      allLines.push(`[Polling exception: ${e.message}]`);
+      setFdLog(allLines.join('\n'));
+    }
+  }
+  setTimeout(poll, 500);
+}
+
+async function refreshModalAfterStep(baseName, fileType, step){
+  // Fetch step-status mới để update tabs enabled + auto-switch
+  const c = getCfg();
+  try {
+    const r = await fetch(`${c.adminUrl}/admin/step-status?base_name=${encodeURIComponent(baseName)}&file_type=${encodeURIComponent(fileType)}`,
+                          {headers:{'X-API-Key': c.apiKey}});
+    const data = await r.json();
+    if(r.ok){
+      // Enable tab tương ứng nếu bước vừa chạy đã hoàn tất
+      const tabMap = { ocr: 'txt', prepare: 'review', generate: 'markdown', finalize: 'chunks' };
+      const tabKey = tabMap[step];
+      const modal = document.querySelector('.modal-backdrop');
+      if(modal && tabKey){
+        const tabBtn = modal.querySelector(`.modal-tab[data-ftab="${tabKey}"]`);
+        if(tabBtn){
+          tabBtn.disabled = false;
+          // Auto-switch sang tab đó (sau 800ms để user kịp đọc log)
+          setTimeout(() => { tabBtn.click(); }, 800);
+        }
+      }
+      // Re-render lại action buttons ở tab overview — đơn giản: reload modal sau 3s
+      // nhưng giữ log qua sessionStorage.
+      setTimeout(() => {
+        // giữ log — lưu vào sessionStorage xong rồi mới reload
+        reloadCurrentModal(baseName, fileType);
+      }, 2600);
+    }
+  } catch(e){}
+}
+
+function reloadCurrentModal(baseName, fileType){
+  document.querySelector('.modal-backdrop')?.remove();
+  const row = document.querySelector(`.file-row[data-bn="${CSS.escape(baseName)}"]`);
+  const ft = fileType || (row && row.dataset.ft) || 'pdf';
+  openFileDetail(baseName, ft);
+}
+
+// ============ CONFLICT + RAG-IN (không dùng job, vì có prompt tương tác) ============
+function showConflictModal(baseName, fileType, analysis){
+  const exactDups = analysis.exact_duplicates || [];
+  const candidates = analysis.candidates || [];
+  const totalChunkConflicts = candidates.reduce((s,c) => s + c.cap_doan.length, 0);
+  const totalConflicts = exactDups.length + totalChunkConflicts;
+
+  // Không có xung đột → tự apply luôn (đưa tất cả chunk mới lên active)
+  if(totalConflicts === 0){
+    if(confirm('✅ Không phát hiện xung đột/trùng lặp nào.\n\nĐưa toàn bộ nội dung vào production ngay?')){
+      applyDecisions(baseName, fileType,
+                     {exact_duplicates: [], chunk_decisions: []}, null);
+    }
+    return;
+  }
+
+  // Khởi tạo decisions — mặc định null (chưa chọn)
+  const decisions = {
+    exact_duplicates: exactDups.map(d => ({old_base_name: d.base_name, action: null})),
+    chunk_decisions: []
+  };
+  candidates.forEach(c => c.cap_doan.forEach(p => {
+    decisions.chunk_decisions.push({
+      source_file: c.source_file,
+      new_chunk_id: p.new_chunk_id,
+      old_chunk_id: p.old_chunk_id,
+      analysis: p.analysis,          // giữ để backend gắn valid_from/valid_to
+      action: null
+    });
+  }));
+
+  let html = `<div class="banner banner-warn">
+    ⚠️ Phát hiện <b>${totalConflicts}</b> điểm cần xử lý
+    (${exactDups.length} trùng tuyệt đối · ${totalChunkConflicts} xung đột cấp đoạn).
+    <br>Chọn hành động cho <b>từng mục</b> bên dưới rồi bấm <b>Xác nhận</b> ở cuối.
+  </div>`;
+
+  // ---- Section 1: trùng lặp tuyệt đối ----
+  if(exactDups.length){
+    html += `<h3 style="margin:16px 0 10px;font-size:14px">🔴 Trùng lặp tuyệt đối (${exactDups.length})</h3>`;
+    exactDups.forEach((d, i) => {
+      const m = d.sample_metadata || {};
+      html += `
+        <div class="conflict-card">
+          <div class="conflict-header">
+            Toàn bộ nội dung trùng với: <code>${escHtml(d.base_name)}</code>
+            ${d.trang_thai_van_ban ? `<span class="badge">${escHtml(d.trang_thai_van_ban)}</span>` : ''}
+          </div>
+          <div class="conflict-cols">
+            <div class="conflict-col">
+              <div class="conflict-col-head">📄 Bản cũ: ${escHtml(d.base_name)}</div>
+              <div class="conflict-col-meta">
+                <div>Số hiệu: ${escHtml(m.so_hieu || '?')}</div>
+                <div>Tiêu đề: ${escHtml(m.tieu_de || '?')}</div>
+                <div>Loại: ${escHtml(m.loai_van_ban || '?')}</div>
+                <div>Chunks active: ${d.n_active_chunks}</div>
+                <div>Nguồn gốc: <code>${escHtml(d.nguon_goc || '(không rõ)')}</code></div>
+              </div>
+            </div>
+            <div class="conflict-col">
+              <div class="conflict-col-head">📝 Bản mới: ${escHtml(baseName)}</div>
+              <div class="conflict-col-meta">
+                <div>Nội dung giống hệt bản cũ (checksum khớp)</div>
+                <div>Checksum: <code>${escHtml((analysis.checksum||'').substring(0,16))}…</code></div>
+              </div>
+            </div>
+          </div>
+          <div class="conflict-actions">
+            <button class="btn-keep-old"  data-action="giu_cu"  data-type="exact-dup" data-idx="${i}">Giữ bản cũ</button>
+            <button class="btn-use-new"   data-action="thay_the" data-type="exact-dup" data-idx="${i}">Thay thế bằng bản mới</button>
+            <button class="btn-keep-both" data-action="doc_lap" data-type="exact-dup" data-idx="${i}">Lưu độc lập</button>
+          </div>
+        </div>`;
+    });
+  }
+
+  // ---- Section 2: xung đột cấp đoạn ----
+  if(candidates.length){
+    html += `<h3 style="margin:20px 0 10px;font-size:14px">🟡 Xung đột cấp đoạn (${totalChunkConflicts})</h3>`;
+    candidates.forEach(cand => {
+      const sm = cand.sample_metadata || {};
+      html += `<div class="candidate-block">
+        <div class="candidate-head">
+          📄 <b>${escHtml(cand.source_file)}</b>
+          <span class="badge">${escHtml(sm.so_hieu || '?')}</span>
+          <span class="badge">${escHtml(sm.loai_van_ban || '?')}</span>
+          <span class="badge">score ${cand.diem.toFixed(2)}</span>
+          ${cand.nguon_goc ? `<span class="badge" title="${escHtml(cand.nguon_goc)}">📎 có nguồn gốc</span>` : ''}
+        </div>`;
+      cand.cap_doan.forEach(pair => {
+        const gi = decisions.chunk_decisions.findIndex(
+          d => d.source_file === cand.source_file && d.new_chunk_id === pair.new_chunk_id);
+        const a = pair.analysis || {};
+        const om = pair.old_metadata || {}, nm = pair.new_metadata || {};
+        html += `
+          <div class="conflict-card">
+            <div class="conflict-header">
+              Quan hệ: ${quanHeLabel(a.quan_he)}
+              <span class="badge">độ chắc chắn: ${escHtml(a.do_chac_chan || '?')}</span>
+              <span class="badge">score: ${pair.score.toFixed(2)}</span>
+            </div>
+            ${a.tom_tat ? `<div class="conflict-tomtat"><b>Tóm tắt:</b> ${escHtml(a.tom_tat)}</div>` : ''}
+            ${a.ly_do   ? `<div class="conflict-lydo"><b>Lý do:</b> ${escHtml(a.ly_do)}</div>` : ''}
+            <div class="conflict-cols">
+              <div class="conflict-col">
+                <div class="conflict-col-head">📄 Nội dung hiện có</div>
+                <div class="conflict-col-meta">
+                  ${om.dieu ? `<div>Điều: ${escHtml(om.dieu)}</div>` : ''}
+                  ${om.trang ? `<div>Trang: ${escHtml(String(om.trang))}</div>` : ''}
+                  <div>chunk_id: <code>${escHtml(pair.old_chunk_id)}</code></div>
+                </div>
+                <div class="conflict-col-content">${escHtml(pair.old_content)}</div>
+              </div>
+              <div class="conflict-col">
+                <div class="conflict-col-head">📝 Nội dung mới</div>
+                <div class="conflict-col-meta">
+                  ${nm.dieu ? `<div>Điều: ${escHtml(nm.dieu)}</div>` : ''}
+                  ${nm.trang ? `<div>Trang: ${escHtml(String(nm.trang))}</div>` : ''}
+                  <div>chunk_id: <code>${escHtml(pair.new_chunk_id)}</code></div>
+                </div>
+                <div class="conflict-col-content">${escHtml(pair.new_content)}</div>
+              </div>
+            </div>
+            <div class="conflict-actions">
+              <button class="btn-keep-old"  data-action="giu_cu"   data-type="chunk" data-idx="${gi}">Giữ bản cũ</button>
+              <button class="btn-use-new"   data-action="thay_the" data-type="chunk" data-idx="${gi}">Dùng bản mới</button>
+              <button class="btn-keep-both" data-action="giu_ca_2" data-type="chunk" data-idx="${gi}">Giữ cả hai</button>
+            </div>
+          </div>`;
+      });
+      html += `</div>`;
+    });
+  }
+
+  const modal = openModal({
+    title: `⚠️ ${totalConflicts} xung đột cần xử lý — ${baseName}`,
+    meta: `${exactDups.length} trùng tuyệt đối · ${totalChunkConflicts} xung đột cấp đoạn · File: ${baseName}`,
+    bodyHtml: html,
+    footerHtml: `
+      <span id="cf-status" class="hint" style="margin-right:auto"></span>
+      <button class="btn-close-foot">Hủy</button>
+      <button class="btn-primary" id="cf-apply" disabled>✅ Xác nhận &amp; áp dụng</button>`
+  });
+
+  const state = { decisions };
+
+  // Gắn handler cho mọi nút chọn action
+  modal.querySelectorAll('.conflict-actions button').forEach(btn => {
+    btn.onclick = () => {
+      const {type, idx, action} = btn.dataset;
+      const i = parseInt(idx, 10);
+      btn.closest('.conflict-actions').querySelectorAll('button')
+         .forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      if(type === 'exact-dup') state.decisions.exact_duplicates[i].action = action;
+      else                     state.decisions.chunk_decisions[i].action  = action;
+      updateApplyBtn(modal, state);
+    };
+  });
+
+  modal.querySelector('.btn-close-foot').onclick = () => modal.remove();
+  modal.querySelector('#cf-apply').onclick = () =>
+    applyDecisions(baseName, fileType, state.decisions, modal);
+  updateApplyBtn(modal, state);
+}
+
+function updateApplyBtn(modal, state){
+  const allExact = state.decisions.exact_duplicates;
+  const allChunk = state.decisions.chunk_decisions;
+  const done  = allExact.filter(d => d.action).length + allChunk.filter(d => d.action).length;
+  const total = allExact.length + allChunk.length;
+  const btn = modal.querySelector('#cf-apply');
+  const st  = modal.querySelector('#cf-status');
+  btn.disabled = done < total;
+  st.textContent = `Đã chọn ${done}/${total}`;
+}
+
+async function applyDecisions(baseName, fileType, decisions, modal){
+  const c = getCfg();
+  if(modal){
+    modal.querySelector('#cf-apply').disabled = true;
+    modal.querySelector('#cf-status').textContent = '⏳ Đang áp dụng...';
+  }
+  let jobId;
+  try{
+    const r = await fetch(c.adminUrl + '/admin/apply-decisions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({base_name: baseName, decisions})
+    });
+    const data = await r.json();
+    if(!r.ok || !data.job_id){
+      const msg = '❌ ' + (data.error || ('HTTP ' + r.status));
+      if(modal) modal.querySelector('#cf-status').textContent = msg;
+      else alert(msg);
+      return;
+    }
+    jobId = data.job_id;
+  } catch(e){
+    if(modal) modal.querySelector('#cf-status').textContent = '❌ ' + e.message;
+    else alert('❌ ' + e.message);
+    return;
+  }
+
+  let fromIdx = 0; const allLines = [];
+  setFdLog(''); updateLogStatus('queued', null, 'apply');
+  async function poll(){
+    try{
+      const r = await fetch(`${c.adminUrl}/admin/job/${jobId}?from=${fromIdx}`,
+                            {headers:{'X-API-Key': c.apiKey}});
+      const data = await r.json();
+      if(data.log && data.log.length){
+        for(const ln of data.log) allLines.push(ln);
+        fromIdx = data.log_total;
+        setFdLog(allLines.join('\n'));
+      }
+      updateLogStatus(data.status, data.ok, 'apply');
+      if(data.status === 'done'){
+        if(modal) modal.remove();
+        if(data.ok){
+          alert('✅ Đã áp dụng thành công!\n\n' + (data.result?.message || ''));
+          reloadCurrentModal(baseName, fileType);
+        } else {
+          alert('❌ Có lỗi khi áp dụng - xem log bên dưới.');
+        }
+        return;
+      }
+      setTimeout(poll, 800);
+    } catch(e){
+      allLines.push('[Polling exception] ' + e.message);
+      setFdLog(allLines.join('\n'));
+    }
+  }
+  setTimeout(poll, 500);
+}
+async function doCheckConflict(baseName, fileType){
+  if(!confirm(`Phân tích xung đột cho "${baseName}"?\n\n` +
+              `Bước 1 (quick scan, ~5-30s): checksum + trùng lặp + vector search.\n` +
+              `Chưa gọi LLM. Sau khi xong sẽ hiện dialog chọn cấp FILE trước.`)) return;
+
+  const c = getCfg();
+  setFdLog(''); updateLogStatus('queued', null, 'quickscan');
+  document.getElementById('fd-log-panel')?.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  let jobId;
+  try{
+    const r = await fetch(c.adminUrl + '/admin/analyze-conflict', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({base_name: baseName})
+    });
+    const data = await r.json();
+    if(!r.ok || !data.job_id){
+      setFdLog('❌ ' + (data.error || ('HTTP ' + r.status)));
+      updateLogStatus('done', false, 'quickscan'); return;
+    }
+    jobId = data.job_id;
+  } catch(e){ setFdLog('❌ ' + e.message); updateLogStatus('done', false, 'quickscan'); return; }
+
+  let fromIdx = 0; const allLines = [];
+  async function poll(){
+    try{
+      const r = await fetch(`${c.adminUrl}/admin/job/${jobId}?from=${fromIdx}`,
+                            {headers:{'X-API-Key': c.apiKey}});
+      const data = await r.json();
+      if(data.log && data.log.length){
+        for(const ln of data.log) allLines.push(ln);
+        fromIdx = data.log_total;
+        setFdLog(allLines.join('\n'));
+      }
+      updateLogStatus(data.status, data.ok, 'quickscan');
+      if(data.status === 'done'){
+        if(data.ok && data.result){
+          showQuickScanModal(baseName, fileType, data.result);
+        } else {
+          setFdLog(allLines.join('\n') + '\n\n❌ Quick scan thất bại.');
+          alert('❌ Quick scan thất bại — xem log.');
+        }
+        return;
+      }
+      setTimeout(poll, 800);
+    } catch(e){
+      allLines.push('[Polling exception] ' + e.message);
+      setFdLog(allLines.join('\n'));
+    }
+  }
+  setTimeout(poll, 500);
+}
+
+function showQuickScanModal(baseName, fileType, quick){
+  const exactDups = quick.exact_duplicates || [];
+  const candidateFiles = quick.candidate_files || [];
+  const totalPairs = quick.n_pairs_to_analyze || 0;
+
+  if(exactDups.length === 0 && candidateFiles.length === 0){
+    if(confirm('✅ Không phát hiện trùng lặp hay văn bản liên quan.\n\nĐưa toàn bộ vào production?')){
+      applyDecisions(baseName, fileType,
+        {exact_duplicates: [], file_decisions: [], chunk_decisions: []}, null);
+    }
+    return;
+  }
+
+  const state = {
+    decisions: {
+      exact_duplicates: exactDups.map(d => ({old_base_name: d.base_name, action: null})),
+      file_decisions: candidateFiles.map(c => ({source_file: c.source_file, action: null})),
+      chunk_decisions: [],
+    },
+  };
+
+  let html = `<div class="banner banner-warn">
+    Quyết định cấp FILE trước:
+    <br>• <b>Thay thế toàn bộ file</b> → không cần gọi LLM, áp dụng ngay.
+    <br>• <b>Giữ cả 2 phiên bản</b> → không cần gọi LLM.
+    <br>• <b>Xuống cấp đoạn</b> → sẽ gọi LLM phân tích ${totalPairs} cặp (mất 1-5 phút).
+  </div>`;
+
+  if(exactDups.length){
+    html += `<h3 style="margin:16px 0 10px;font-size:14px">🔴 Trùng lặp tuyệt đối (${exactDups.length})</h3>`;
+    exactDups.forEach((d, i) => {
+      const m = d.sample_metadata || {};
+      html += `
+        <div class="conflict-card">
+          <div class="conflict-header">
+            Toàn bộ nội dung trùng với: <code>${escHtml(d.base_name)}</code>
+            ${d.trang_thai_van_ban ? `<span class="badge">${escHtml(d.trang_thai_van_ban)}</span>` : ''}
+          </div>
+          <div class="conflict-cols">
+            <div class="conflict-col">
+              <div class="conflict-col-head">📄 Bản cũ: ${escHtml(d.base_name)}</div>
+              <div class="conflict-col-meta">
+                <div>Số hiệu: ${escHtml(m.so_hieu || '?')}</div>
+                <div>Tiêu đề: ${escHtml(m.tieu_de || '?')}</div>
+                <div>Chunks active: ${d.n_active_chunks}</div>
+              </div>
+            </div>
+            <div class="conflict-col">
+              <div class="conflict-col-head">📝 Bản mới: ${escHtml(baseName)}</div>
+              <div class="conflict-col-meta"><div>Nội dung giống hệt (checksum khớp)</div></div>
+            </div>
+          </div>
+          <div class="conflict-actions">
+            <button class="btn-keep-old"  data-action="giu_cu"  data-type="exact-dup" data-idx="${i}">Giữ bản cũ</button>
+            <button class="btn-use-new"   data-action="thay_the" data-type="exact-dup" data-idx="${i}">Thay thế bằng bản mới</button>
+            <button class="btn-keep-both" data-action="doc_lap" data-type="exact-dup" data-idx="${i}">Lưu độc lập</button>
+          </div>
+        </div>`;
+    });
+  }
+
+  if(candidateFiles.length){
+    html += `<h3 style="margin:20px 0 10px;font-size:14px">🟡 Văn bản liên quan (${candidateFiles.length})</h3>`;
+    candidateFiles.forEach((cand, i) => {
+      const sm = cand.sample_metadata || {};
+      const approxMin = Math.max(1, Math.ceil(cand.n_cap_doan * 20 / 60));
+      const nghiTrungFile = !!cand.rat_co_kha_nang_trung_lap_toan_file;
+      html += `
+        <div class="conflict-card" ${nghiTrungFile ? 'style="border-color:#f59e0b;border-width:2px"' : ''}>
+          ${nghiTrungFile ? `
+          <div class="banner banner-warn" style="margin:10px 14px 0">
+            ⚠️⚠️ <b>${Math.round((cand.ty_le_trung||0)*100)}%</b> nội dung văn bản mới khớp
+            <b>gần như tuyệt đối</b> với file này — rất có thể đây là 2 bản OCR/quét khác nhau của
+            <b>CÙNG 1 văn bản</b>.
+            <br>👉 Khuyến nghị: bấm <b>"Thay thế toàn bộ file"</b> bên dưới thay vì "Xuống cấp đoạn".
+          </div>` : ''}
+          <div class="conflict-header">
+            <b>${escHtml(cand.source_file)}</b>
+            <span class="badge">score ${cand.diem.toFixed(2)}</span>
+            <span class="badge">${cand.n_cap_doan} cặp đoạn</span>
+            ${sm.so_hieu ? `<span class="badge">${escHtml(sm.so_hieu)}</span>` : ''}
+            ${sm.loai_van_ban ? `<span class="badge">${escHtml(sm.loai_van_ban)}</span>` : ''}
+            ${cand.nguon_goc ? `<span class="badge" title="${escHtml(cand.nguon_goc)}">📎 nguồn gốc</span>` : ''}
+          </div>
+          <div class="conflict-tomtat"><b>Tiêu đề:</b> ${escHtml(sm.tieu_de || '?')}</div>
+          <div class="conflict-actions">
+            <button class="btn-keep-old"  data-action="xuong_cap_doan" data-type="file" data-idx="${i}">Xuống cấp đoạn (~${approxMin} phút, ${cand.n_cap_doan} cặp)</button>
+            <button class="btn-keep-both" data-action="giu_2"          data-type="file" data-idx="${i}">Giữ cả 2 phiên bản</button>
+            <button class="btn-use-new"   data-action="thay_the"        data-type="file" data-idx="${i}">Thay thế toàn bộ file</button>
+          </div>
+        </div>`;
+    });
+  }
+
+  const modal = openModal({
+    title: `⚠️ Quyết định cấp file — ${baseName}`,
+    meta: `${exactDups.length} trùng tuyệt đối · ${candidateFiles.length} file liên quan · ${totalPairs} cặp nếu phân tích`,
+    bodyHtml: html,
+    footerHtml: `
+      <span id="cf-status" class="hint" style="margin-right:auto"></span>
+      <button class="btn-close-foot">Hủy</button>
+      <button class="btn-primary" id="cf-continue" disabled>Tiếp tục →</button>`
+  });
+
+  function updateContinue(){
+    const all = state.decisions.exact_duplicates.length + state.decisions.file_decisions.length;
+    const done = state.decisions.exact_duplicates.filter(d => d.action).length
+               + state.decisions.file_decisions.filter(d => d.action).length;
+    modal.querySelector('#cf-continue').disabled = done < all;
+    modal.querySelector('#cf-status').textContent = `Đã chọn ${done}/${all}`;
+  }
+
+  modal.querySelectorAll('.conflict-actions button').forEach(btn => {
+    btn.onclick = () => {
+      const {type, idx, action} = btn.dataset;
+      btn.closest('.conflict-actions').querySelectorAll('button')
+         .forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      if(type === 'exact-dup') state.decisions.exact_duplicates[parseInt(idx)].action = action;
+      else                     state.decisions.file_decisions[parseInt(idx)].action   = action;
+      updateContinue();
+    };
+  });
+
+  modal.querySelector('.btn-close-foot').onclick = () => modal.remove();
+  modal.querySelector('#cf-continue').onclick = () => {
+    const xuongCap = state.decisions.file_decisions
+      .filter(d => d.action === 'xuong_cap_doan').map(d => d.source_file);
+    modal.remove();
+    if(xuongCap.length === 0){
+      applyDecisions(baseName, fileType, state.decisions, null);
+    } else {
+      doAnalyzePairSubset(baseName, fileType, state, xuongCap);
+    }
+  };
+  updateContinue();
+}
+
+async function doAnalyzePairSubset(baseName, fileType, state, sourceFiles){
+  const c = getCfg();
+  setFdLog(''); updateLogStatus('queued', null, 'analyze-pairs');
+  document.getElementById('fd-log-panel')?.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  let jobId;
+  try{
+    const r = await fetch(c.adminUrl + '/admin/analyze-chunk-pairs', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({base_name: baseName, source_files: sourceFiles})
+    });
+    const data = await r.json();
+    if(!r.ok || !data.job_id){
+      setFdLog('❌ ' + (data.error || ('HTTP ' + r.status)));
+      updateLogStatus('done', false, 'analyze-pairs'); return;
+    }
+    jobId = data.job_id;
+  } catch(e){ setFdLog('❌ ' + e.message); updateLogStatus('done', false, 'analyze-pairs'); return; }
+
+  let fromIdx = 0; const allLines = [];
+  async function poll(){
+    try{
+      const r = await fetch(`${c.adminUrl}/admin/job/${jobId}?from=${fromIdx}`,
+                            {headers:{'X-API-Key': c.apiKey}});
+      const data = await r.json();
+      if(data.log && data.log.length){
+        for(const ln of data.log) allLines.push(ln);
+        fromIdx = data.log_total;
+        setFdLog(allLines.join('\n'));
+      }
+      updateLogStatus(data.status, data.ok, 'analyze-pairs');
+      if(data.status === 'done'){
+        if(data.ok && data.result){
+          showChunkLevelModal(baseName, fileType, state, data.result.candidates || []);
+        } else {
+          setFdLog(allLines.join('\n') + '\n\n❌ Phân tích cặp đoạn thất bại.');
+          alert('❌ Phân tích cặp đoạn thất bại — xem log.');
+        }
+        return;
+      }
+      setTimeout(poll, 800);
+    } catch(e){
+      allLines.push('[Polling exception] ' + e.message);
+      setFdLog(allLines.join('\n'));
+    }
+  }
+  setTimeout(poll, 500);
+}
+
+function showChunkLevelModal(baseName, fileType, state, candidates){
+  candidates.forEach(cand => cand.cap_doan.forEach(pair => {
+    state.decisions.chunk_decisions.push({
+      source_file: cand.source_file,
+      new_chunk_id: pair.new_chunk_id,
+      old_chunk_id: pair.old_chunk_id,
+      analysis: pair.analysis,
+      action: null,
+    });
+  }));
+
+  const total = state.decisions.chunk_decisions.length;
+  if(total === 0){
+    if(confirm('✅ LLM lọc hết — không có cặp đoạn nào cần xử lý thủ công.\n\nÁp dụng quyết định cấp file luôn?')){
+      applyDecisions(baseName, fileType, state.decisions, null);
+    }
+    return;
+  }
+
+  let html = `<div class="banner banner-warn">⚠️ <b>${total}</b> cặp đoạn cần chọn. Mỗi cặp phải chọn 1 hành động.</div>`;
+  candidates.forEach(cand => {
+    const sm = cand.sample_metadata || {};
+    html += `<div class="candidate-block">
+      <div class="candidate-head">
+        📄 <b>${escHtml(cand.source_file)}</b>
+        <span class="badge">score ${cand.diem.toFixed(2)}</span>
+        ${sm.so_hieu ? `<span class="badge">${escHtml(sm.so_hieu)}</span>` : ''}
+      </div>`;
+    cand.cap_doan.forEach(pair => {
+      const gi = state.decisions.chunk_decisions.findIndex(
+        d => d.source_file === cand.source_file && d.new_chunk_id === pair.new_chunk_id);
+      const a = pair.analysis || {};
+      const om = pair.old_metadata || {}, nm = pair.new_metadata || {};
+      html += `
+        <div class="conflict-card">
+          <div class="conflict-header">
+            Quan hệ: ${quanHeLabel(a.quan_he)}
+            <span class="badge">độ chắc chắn: ${escHtml(a.do_chac_chan || '?')}</span>
+            <span class="badge">score: ${pair.score.toFixed(2)}</span>
+          </div>
+          ${a.tom_tat ? `<div class="conflict-tomtat"><b>Tóm tắt:</b> ${escHtml(a.tom_tat)}</div>` : ''}
+          ${a.ly_do   ? `<div class="conflict-lydo"><b>Lý do:</b> ${escHtml(a.ly_do)}</div>` : ''}
+          <div class="conflict-cols">
+            <div class="conflict-col">
+              <div class="conflict-col-head">📄 Nội dung hiện có</div>
+              <div class="conflict-col-meta">
+                ${om.dieu ? `<div>Điều: ${escHtml(om.dieu)}</div>` : ''}
+                ${om.trang ? `<div>Trang: ${escHtml(String(om.trang))}</div>` : ''}
+                <div>chunk_id: <code>${escHtml(pair.old_chunk_id)}</code></div>
+              </div>
+              <div class="conflict-col-content">${escHtml(pair.old_content)}</div>
+            </div>
+            <div class="conflict-col">
+              <div class="conflict-col-head">📝 Nội dung mới</div>
+              <div class="conflict-col-meta">
+                ${nm.dieu ? `<div>Điều: ${escHtml(nm.dieu)}</div>` : ''}
+                ${nm.trang ? `<div>Trang: ${escHtml(String(nm.trang))}</div>` : ''}
+                <div>chunk_id: <code>${escHtml(pair.new_chunk_id)}</code></div>
+              </div>
+              <div class="conflict-col-content">${escHtml(pair.new_content)}</div>
+            </div>
+          </div>
+          <div class="conflict-actions">
+            <button class="btn-keep-old"  data-action="giu_cu"   data-type="chunk" data-idx="${gi}">Giữ bản cũ</button>
+            <button class="btn-use-new"   data-action="thay_the" data-type="chunk" data-idx="${gi}">Dùng bản mới</button>
+            <button class="btn-keep-both" data-action="giu_ca_2" data-type="chunk" data-idx="${gi}">Giữ cả hai</button>
+          </div>
+        </div>`;
+    });
+    html += `</div>`;
+  });
+
+  const modal = openModal({
+    title: `🟡 Xung đột cấp đoạn — ${baseName}`,
+    meta: `${total} cặp đoạn cần chọn · File: ${baseName}`,
+    bodyHtml: html,
+    footerHtml: `
+      <span id="cf-status" class="hint" style="margin-right:auto"></span>
+      <button class="btn-close-foot">Hủy</button>
+      <button class="btn-primary" id="cf-apply" disabled>✅ Xác nhận &amp; áp dụng</button>`
+  });
+
+  function updateApply(){
+    const all = state.decisions.chunk_decisions;
+    const done = all.filter(d => d.action).length;
+    modal.querySelector('#cf-apply').disabled = done < all.length;
+    modal.querySelector('#cf-status').textContent = `Đã chọn ${done}/${all.length}`;
+  }
+
+  modal.querySelectorAll('.conflict-actions button').forEach(btn => {
+    btn.onclick = () => {
+      const {idx, action} = btn.dataset;
+      btn.closest('.conflict-actions').querySelectorAll('button')
+         .forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state.decisions.chunk_decisions[parseInt(idx)].action = action;
+      updateApply();
+    };
+  });
+
+  modal.querySelector('.btn-close-foot').onclick = () => modal.remove();
+  modal.querySelector('#cf-apply').onclick = () =>
+    applyDecisions(baseName, fileType, state.decisions, modal);
+  updateApply();
+}
+
+
+async function doRagIn(baseName, fileType){
+  if(!confirm(`Rebuild FAISS THỦ CÔNG cho toàn bộ production (không riêng "${baseName}")?\n\n` +
+              `Bình thường KHÔNG cần bấm nút này - "⚠️/🔁 Kiểm tra xung đột" đã tự rebuild-index ngay sau khi ` +
+              `chạy xong. Chỉ dùng nút này để đồng bộ lại thủ công (vd sau khi restore-snapshot, hoặc sau khi ` +
+              `tự sửa nội dung chunk). Có thể mất vài phút.`)) return;
+  setFdLog('⏳ Đang rebuild FAISS...');
+  updateLogStatus('running', null, 'rag-in');
+  const c = getCfg();
+  try{
+    const r = await fetch(c.adminUrl + '/admin/rag-in', {method:'POST', headers:{'X-API-Key': c.apiKey}});
+    const data = await r.json();
+    setFdLog((data.ok?'✅':'❌') + ' [rag-in]\n\n' + (data.stdout||'') + (data.stderr ? '\n--- STDERR ---\n'+data.stderr : ''));
+    updateLogStatus('done', data.ok, 'rag-in');
+    if(data.ok) setTimeout(() => reloadCurrentModal(baseName, fileType), 2600);
+  }catch(e){ setFdLog('❌ ' + e.message); updateLogStatus('done', false, 'rag-in'); }
+}
+// ============ DELETE FILE ============
+async function doDeleteFile(baseName, fileType){
+  const msg = ` XÓA FILE: "${baseName}"?\n\n` +
+    `Sẽ xóa:\n` +
+    `- File gốc trong data/raw/\n` +
+    `- .txt (OCR), _review.json, .md\n` +
+    `- chunks .json\n` +
+    `- Khỏi manifest.json\n` +
+    `- Nếu file đã ở RAG: rebuild FAISS để chatbot KHÔNG trả lời được nữa\n\n` +
+    `KHÔNG THỂ HOÀN TÁC. Tiếp tục?`;
+  if(!confirm(msg)) return;
+  const typed = prompt(`Nhập "XOA" để xác nhận xóa vĩnh viễn "${baseName}":`);
+  if(typed !== 'XOA'){ alert('Đã hủy.'); return; }
+
+  setProcessOutput(`⏳ Đang xóa ${baseName}...`);
+  const c = getCfg();
+  try{
+    const r = await fetch(c.adminUrl + '/admin/delete-file', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({base_name: baseName, file_type: fileType})
+    });
+    const data = await r.json();
+    if(!r.ok){ setProcessOutput('❌ ' + (data.error||r.status)); return; }
+    let out = `✅ Đã xóa "${baseName}"\n\n`;
+    out += `--- Files đã xóa ---\n${(data.removed||[]).join('\n') || '(không có)'}\n\n`;
+    if(data.was_in_production){
+      out += `--- Có trong production: đã rebuild FAISS ---\n`;
+      out += (data.rebuild && data.rebuild.stdout || '') + '\n';
+      if(data.rebuild && data.rebuild.stderr) out += 'STDERR:\n' + data.rebuild.stderr + '\n';
+    } else {
+      out += `(File chưa vào production — không cần rebuild)\n`;
+    }
+    setProcessOutput(out);
+    loadFiles();
+  }catch(e){ setProcessOutput('❌ ' + e.message); }
+}
+
+
+async function openFileDetail(baseName, fileType){
+  const c = getCfg();
+  const [filesResp, stepResp, mdResp, txtResp, chunkResp, reviewResp] = await Promise.all([
+    fetch(c.adminUrl + '/admin/files', {headers:{'X-API-Key': c.apiKey}}).then(r=>r.json()).catch(()=>({files:[]})),
+    fetch(c.adminUrl + `/admin/step-status?base_name=${encodeURIComponent(baseName)}&file_type=${encodeURIComponent(fileType)}`,
+          {headers:{'X-API-Key': c.apiKey}}).then(r => r.ok ? r.json() : null).catch(()=>null),
+    fetch(c.adminUrl + `/admin/markdown?base_name=${encodeURIComponent(baseName)}&stage=md`,
+          {headers:{'X-API-Key': c.apiKey}}).then(r => r.ok ? r.json() : null).catch(()=>null),
+    fetch(c.adminUrl + `/admin/markdown?base_name=${encodeURIComponent(baseName)}&stage=txt`,
+          {headers:{'X-API-Key': c.apiKey}}).then(r => r.ok ? r.json() : null).catch(()=>null),
+    fetch(c.adminUrl + `/admin/chunks?base_name=${encodeURIComponent(baseName)}`,
+          {headers:{'X-API-Key': c.apiKey}}).then(r => r.ok ? r.json() : null).catch(()=>null),
+    fetch(c.adminUrl + `/admin/review-meta?base_name=${encodeURIComponent(baseName)}`,
+          {headers:{'X-API-Key': c.apiKey}}).then(r => r.ok ? r.json() : null).catch(()=>null),
+  ]);
+  const info = (filesResp.files||[]).find(f => f.base_name === baseName)
+               || {base_name: baseName, file_type: fileType};
+  const steps = (stepResp && stepResp.steps) || {upload:true, ocr:false, prepare:false, generate:false, chunk:false, rag:false};
+  const next = (stepResp && stepResp.next_step) || 'ocr';
+
+  // ---------- STEPPER ----------
+  const stepDefs = fileType === 'pdf'
+    ? [{k:'upload',l:'Upload'},{k:'ocr',l:'OCR'},{k:'prepare',l:'Prepare'},{k:'generate',l:'Generate'},{k:'chunk',l:'Chunk'},{k:'rag',l:'Vào RAG'}]
+    : [{k:'upload',l:'Upload'},{k:'prepare',l:'Prepare'},{k:'generate',l:'Generate'},{k:'chunk',l:'Chunk'},{k:'rag',l:'Vào RAG'}];
+  const stepperHtml = '<div class="stepper">' + stepDefs.map((s, i) => {
+    const done = steps[s.k];
+    const isCur = (s.k === next);
+    return `${i>0?'<span class="step-arrow">→</span>':''}<div class="step ${done?'done':''} ${isCur?'current':''}"><span class="step-num">${done?'✓':i+1}</span> ${escHtml(s.l)}</div>`;
+  }).join('') + '</div>';
+
+  // ---------- NEXT-STEP BUTTON + [FIX] NÚT "CHẠY LẠI" cho bước đã xong ----------
+  // Trước đây: mỗi bước (ocr/prepare/generate/finalize/check) CHỈ hiện nút khi
+  // nó là next_step - một khi xong, nút biến mất VĨNH VIỄN. Hậu quả trực tiếp:
+  //   - Sửa metadata sau khi .md đã tồn tại -> không còn nút Generate để sinh lại.
+  //   - Sửa .md sau khi đã chunk -> không còn nút Chunk để chunk lại.
+  // Nay tách 2 nhóm: actionsHtml (bước kế tiếp, nổi bật) và redoHtml (bước ĐÃ
+  // xong nhưng vẫn có thể chạy lại có chủ đích, có confirm() cảnh báo ghi đè).
+  const actionsHtml = [];
+  const redoHtml = [];
+
+  if(fileType === 'pdf'){
+    if(next === 'ocr')
+      actionsHtml.push(`<button class="primary-action" data-act="start-step" data-step="ocr" data-bn="${escHtml(baseName)}" data-ft="pdf">② OCR → .txt</button>`);
+    else if(steps.ocr)
+      redoHtml.push(`<button data-act="start-step" data-step="ocr" data-redo="1" data-bn="${escHtml(baseName)}" data-ft="pdf">🔁 OCR lại</button>`);
+  }
+  if(next === 'prepare')
+    actionsHtml.push(`<button class="primary-action" data-act="start-step" data-step="prepare" data-bn="${escHtml(baseName)}" data-ft="${escHtml(fileType)}">③ Prepare → _review.json</button>`);
+  else if(steps.prepare)
+    redoHtml.push(`<button data-act="start-step" data-step="prepare" data-redo="1" data-bn="${escHtml(baseName)}" data-ft="${escHtml(fileType)}">🔁 Prepare lại (gợi ý metadata)</button>`);
+
+  if(next === 'generate')
+    actionsHtml.push(`<button class="primary-action" data-act="start-step" data-step="generate" data-bn="${escHtml(baseName)}" data-ft="${escHtml(fileType)}">④ Generate → .md</button>`);
+  else if(steps.prepare)
+    // [FIX] Đây chính là nút thiếu khiến "sửa metadata xong .md không cập nhật":
+    // luôn cho sinh lại .md theo metadata_xac_nhan MỚI NHẤT trong _review.json,
+    // miễn đã có _review.json - không phụ thuộc việc .md đã tồn tại hay chưa.
+    redoHtml.push(`<button data-act="start-step" data-step="generate" data-redo="1" data-bn="${escHtml(baseName)}" data-ft="${escHtml(fileType)}">🔁 Sinh lại .md (theo metadata mới nhất)</button>`);
+
+  if(next === 'chunk')
+    actionsHtml.push(`<button class="primary-action" data-act="start-step" data-step="finalize" data-bn="${escHtml(baseName)}" data-ft="${escHtml(fileType)}">⑤ Chunk → chunks.json</button>`);
+  else if(steps.generate)
+    // [FIX] Nút thiếu khiến "sửa .md xong không cập nhật chunk".
+    redoHtml.push(`<button data-act="start-step" data-step="finalize" data-redo="1" data-bn="${escHtml(baseName)}" data-ft="${escHtml(fileType)}">🔁 Chunk lại (từ .md hiện tại)</button>`);
+
+  // [FIX] "Kiểm tra xung đột" LUÔN có thể chạy lại một khi đã có chunk - không
+  // chỉ đúng 1 lần khi next==='rag'. Văn bản ĐÃ production rồi bị sửa tay .md
+  // (checksum lệch - xem list_docs_needing_recheck() trong conflict_detection.py)
+  // vẫn cần chạy lại đúng nút này để cập nhật checksum + rà soát trùng lặp lại,
+  // trước đây hoàn toàn không có cách bấm lại.
+  if(steps.chunk && !steps.rag)
+    actionsHtml.push(`<button class="primary-action btn-warn" data-act="check-conflict" data-bn="${escHtml(baseName)}">⑥ ⚠️ Kiểm tra xung đột</button>`);
+  else if(steps.chunk && steps.rag)
+    redoHtml.push(`<button class="btn-warn" data-act="check-conflict" data-bn="${escHtml(baseName)}">🔁 Kiểm tra lại xung đột (sau khi sửa)</button>`);
+
+  // [FIX — QUAN TRỌNG] "🚀 Vào RAG" TRƯỚC ĐÂY hiện CÙNG LÚC với "⚠️ Kiểm tra
+  // xung đột" (2 nút có ĐÚNG 1 điều kiện: steps.chunk && !steps.rag) - nghĩa là
+  // Admin có thể bấm thẳng "Vào RAG" mà KHÔNG BAO GIỜ chạy check-conflict, bỏ
+  // qua hoàn toàn việc phát hiện trùng lặp/xung đột. rag-in (rebuild-index) chỉ
+  // embed lại chunk của các base_name ĐÃ có trong manifest.json - mà CHỈ có
+  // check-conflict mới ghi vào manifest - nên bấm "Vào RAG" cho 1 văn bản CHƯA
+  // check thực chất là NO-OP (không lỗi, nhưng cũng không đưa được văn bản này
+  // vào FAISS) => đúng hiện tượng "làm gì cũng như không thấy gì xảy ra".
+  // Nay: với văn bản CHƯA vào manifest, ẨN "Vào RAG" - bắt buộc phải qua
+  // "Kiểm tra xung đột" (bước này đã tự rebuild-index luôn khi check xong,
+  // xem _maybe_rebuild_now() trong conflict_detection.py). "Vào RAG" chỉ còn
+  // là nút RIÊNG dùng để rebuild lại thủ công (vd sau khi tự sửa chunk/restore
+  // snapshot) khi văn bản ĐÃ ở production rồi.
+  if(steps.rag)
+    redoHtml.push(`<button data-act="rag-in" data-bn="${escHtml(baseName)}" data-ft="${escHtml(fileType)}">🔧 Rebuild FAISS thủ công (đồng bộ lại)</button>`);
+  if(steps.rag)
+    actionsHtml.push(`<div class="banner banner-ok" style="margin:0;flex:1">✅ Đã ở production — chatbot có thể trả lời nội dung này.</div>`);
+  actionsHtml.push(`<button class="btn-danger" data-act="delete-file" data-bn="${escHtml(baseName)}" data-ft="${escHtml(fileType)}"> Xóa file</button>`);
+
+  const redoBlockHtml = redoHtml.length
+    ? `<div class="redo-actions"><div class="redo-actions-label"> Chạy lại 1 bước đã xong (sẽ ghi đè kết quả trước đó):</div>${redoHtml.join('')}</div>`
+    : '';
+
+  // ---------- TAB OVERVIEW ----------
+  const overview = `
+    ${stepperHtml}
+    <div class="banner banner-info" style="font-size:12.5px;line-height:1.7">
+      <b>Luồng chuẩn:</b> ② OCR → ③ Prepare (sửa metadata) → ④ Generate (sửa .md) → ⑤ Chunk → ⑥ Check xung đột → 🚀 (tự vào RAG).
+      <br>Mỗi bước xong → tab tương ứng tự mở để bạn rà soát/sửa, rồi mới bấm bước tiếp theo.
+      <br>💡 Sửa metadata/.md/chunk SAU KHI đã xong 1 bước? Dùng các nút "🔁 Chạy lại" màu vàng bên dưới khu vực hành động chính.
+    </div>
+    <dl class="kv" style="margin-bottom:16px">
+      <dt>Loại</dt><dd>${escHtml(info.file_type)}</dd>
+      <dt>Kích thước</dt><dd>${info.size_kb||'?'} KB</dd>
+      <dt>Upload lúc</dt><dd>${escHtml(info.raw_mtime||'?')}</dd>
+      <dt>② .txt (OCR)</dt><dd>${steps.ocr?'✅':'—'}</dd>
+      <dt>③ _review.json</dt><dd>${steps.prepare?'✅':'—'}</dd>
+      <dt>④ .md</dt><dd>${steps.generate?'✅':'—'}</dd>
+      <dt>⑤ chunks</dt><dd>${steps.chunk?(chunkResp?chunkResp.n+' chunks':'✅'):'—'}</dd>
+      <dt>⑥ Production (RAG)</dt><dd>${steps.rag?'✅ '+(info.production_status||''):'—'}</dd>
+    </dl>
+    <h3 style="font-size:14px;margin-bottom:8px">Hành động</h3>
+    <div class="step-actions">${actionsHtml.join('')}</div>
+    ${redoBlockHtml}`;
+
+  const txtTab = txtResp ? `
+    <div class="banner banner-info">📄 <code>${escHtml(txtResp.path)}</code> — ${txtResp.size} bytes
+      <br>Nếu OCR có lỗi nhỏ, sửa trực tiếp ở đây rồi <b>💾 Lưu</b>, sau đó mới chạy ③ Prepare.</div>
+    <textarea id="fd-txt-editor" spellcheck="false">${escHtml(txtResp.content)}</textarea>
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+      <button class="btn-primary" id="fd-txt-save">💾 Lưu .txt</button>
+      <span id="fd-txt-status" class="hint"></span>
+    </div>` : `<p class="hint">Chưa có .txt — chạy ② OCR trước.</p>`;
+
+  const reviewTab = reviewResp ? `
+    <div class="banner banner-info">⚙️ Metadata dùng để Generate .md.
+      <br><b>Sửa metadata ở đây rồi 💾 Lưu trước</b> khi bấm ④ Generate.
+      <br>Đặc biệt quan trọng: <code>loai_van_ban</code> — quyết định cách đánh header markdown.</div>
+    <div style="display:flex;flex-direction:column;gap:12px;font-size:13px;max-width:640px">
+      <label>loai_van_ban<br><select id="fd-m-loai" style="width:100%;padding:6px">
+        ${(reviewResp.loai_van_ban_options||[]).map(o =>
+          `<option value="${escHtml(o)}"${o===reviewResp.metadata_xac_nhan.loai_van_ban?' selected':''}>${escHtml(o)}</option>`
+        ).join('')}
+      </select></label>
+      <label>tieu_de<br><input id="fd-m-tieude" value="${escHtml(reviewResp.metadata_xac_nhan.tieu_de||'')}" style="width:100%;padding:6px"></label>
+      <label>so_hieu<br><input id="fd-m-sohieu" value="${escHtml(reviewResp.metadata_xac_nhan.so_hieu||'')}" style="width:100%;padding:6px"></label>
+      <label>ngay_ban_hanh (YYYY-MM-DD)<br><input id="fd-m-ngay" value="${escHtml(reviewResp.metadata_xac_nhan.ngay_ban_hanh||'')}" style="width:100%;padding:6px"></label>
+      <label><input type="checkbox" id="fd-m-md" ${reviewResp.metadata_xac_nhan.markdown_da_chinh_xac?'checked':''}> markdown_da_chinh_xac (đã có header sẵn, không đánh lại)</label>
+      <label><input type="checkbox" id="fd-m-email" ${reviewResp.metadata_xac_nhan.tim_email_theo_header?'checked':''}> tim_email_theo_header (gộp email theo từng Điều/mục vào entity_email của chunk — dùng cho file gộp nhiều người/đơn vị, vd danh bạ giảng viên)</label>
+      ${steps.generate ? `
+      <label style="flex-direction:row;align-items:center;gap:6px">
+        <input type="checkbox" id="fd-m-regen">
+        <span>🔁 Sinh lại .md ngay sau khi lưu (GHI ĐÈ nội dung .md hiện tại theo metadata mới)</span>
+      </label>` : ''}
+      <div style="display:flex;gap:8px">
+        <button class="btn-primary" id="fd-m-save">💾 Lưu metadata</button>
+        <span id="fd-m-status" class="hint" style="align-self:center"></span>
+      </div>
+    </div>` : `<p class="hint">Chưa có _review.json — chạy ③ Prepare trước.</p>`;
+
+  const mdTab = mdResp ? `
+    <div class="banner banner-info">📝 <code>${escHtml(mdResp.path)}</code> — ${mdResp.size} bytes
+      <br>Sửa trực tiếp ở đây rồi <b>💾 Lưu .md</b>, sau đó mới chạy ⑤ Chunk.</div>
+    <textarea id="fd-md-editor" spellcheck="false">${escHtml(mdResp.content)}</textarea>
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+      <button class="btn-primary" id="fd-md-save">💾 Lưu .md</button>
+      <span id="fd-md-status" class="hint"></span>
+    </div>` : `<p class="hint">Chưa có .md — chạy ④ Generate trước.</p>`;
+
+  // [FIX] Trước đây chunksTab CHỈ hiển thị tĩnh (div không sửa được, không có
+  // nút Lưu nào) - đây là lý do "sửa chunk trực tiếp xong lưu cũng không
+  // được": tính năng lưu chunk CHƯA TỪNG tồn tại ở cả frontend lẫn backend.
+  // Nay: content -> <textarea>, trạng_thái -> <select>, có nút Lưu chung ở
+  // đầu tab, gọi /admin/chunks (POST, mới thêm ở admin_api.py).
+  const chunksTab = chunkResp ? (() => {
+    const cs = chunkResp.chunks;
+    const active = cs.filter(x => x.trang_thai === 'active').length;
+    return `
+      <div class="banner banner-warn">
+        ⚠️ Sửa <b>nội dung</b> hoặc <b>trạng thái</b> từng chunk rồi bấm <b>💾 Lưu chunks</b> ở dưới.
+        Hệ thống tự backup file chunk cũ trước khi ghi đè, và nếu văn bản này ĐÃ ở production sẽ
+        tự <b>rebuild-index FAISS</b> ngay sau khi lưu.
+      </div>
+        <div class="chunk-bulk-toolbar">
+        <label><input type="checkbox" id="chk-all"> Chọn tất cả</label>
+        <span>|</span>
+        <span>Đổi trạng thái <span id="bulk-count">0</span> chunk đã chọn thành:</span>
+        <select id="bulk-target-status">
+          <option value="active">active</option>
+          <option value="bi_bo_qua">bi_bo_qua</option>
+          <option value="vo_hieu_hoa">vo_hieu_hoa</option>
+          <option value="thay_the">thay_the</option>
+        </select>
+        <button class="btn-warn" id="apply-bulk-status" disabled>Áp dụng</button>
+      </div>
+      <div class="chunk-stats">Tổng <b>${cs.length}</b> · <span style="color:var(--success)">${active} active</span> · <span style="color:var(--danger)">${cs.length-active} không active</span> · <code>${escHtml(chunkResp.path)}</code></div>
+      <div class="chunk-list">
+        ${cs.map((ch, i) => {
+          const stCls = ch.trang_thai === 'active' ? 'active' : 'inactive';
+          const b = [];
+          if(ch.content_type) b.push(`<span>${escHtml(ch.content_type)}</span>`);
+          if(ch.trang) b.push(`<span>trang ${ch.trang}</span>`);
+          if(ch.dieu) b.push(`<span>${escHtml(String(ch.dieu).substring(0,40))}</span>`);
+          return `<div class="chunk-item"><div class="chunk-head">
+            <input type="checkbox" class="chunk-select" data-i="${i}">
+            <span class="chunk-id">#${i+1} · ${escHtml(ch.chunk_id||'')}</span>
+            <span class="chunk-meta"><span class="${stCls}">${escHtml(ch.trang_thai||'?')}</span>${b.join('')}</span>
+          </div><div class="chunk-content" data-i="${i}">
+            <label style="font-size:11px;color:var(--muted)">trạng_thái
+              <select class="chunk-status-select" data-i="${i}">
+                ${['active','bi_bo_qua','vo_hieu_hoa','thay_the'].map(s =>
+                  `<option value="${s}" ${ch.trang_thai===s?'selected':''}>${s}</option>`).join('')}
+              </select>
+            </label>
+            <textarea class="chunk-content-edit" data-i="${i}" spellcheck="false">${escHtml(ch.content||'')}</textarea>
+          </div></div>`;
+        }).join('')}
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px;align-items:center">
+        <button class="btn-primary" id="fd-chunks-save">💾 Lưu chunks</button>
+        <span id="fd-chunks-status" class="hint"></span>
+      </div>`;
+  })() : `<p class="hint">Chưa có chunks — chạy ⑤ Chunk trước.</p>`;
+
+  openModal({
+    title: `📄 ${baseName}`,
+    meta: `${fileType.toUpperCase()} · ${info.size_kb||'?'} KB · ${info.raw_mtime||''}`,
+    bodyHtml: `
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-ftab="overview">Tổng quan</button>
+        <button class="modal-tab" data-ftab="txt" ${!txtResp?'disabled':''}>📄 OCR .txt</button>
+        <button class="modal-tab" data-ftab="review" ${!reviewResp?'disabled':''}>⚙️ Metadata</button>
+        <button class="modal-tab" data-ftab="markdown" ${!mdResp?'disabled':''}>📝 Markdown</button>
+        <button class="modal-tab" data-ftab="chunks" ${!chunkResp?'disabled':''}>🧩 Chunks (${chunkResp?chunkResp.n:0})</button>
+      </div>
+      <div id="fd-tab-content" style="margin-top:14px">
+        <div class="fd-pane" data-fpane="overview">${overview}</div>
+        <div class="fd-pane" data-fpane="txt" style="display:none">${txtTab}</div>
+        <div class="fd-pane" data-fpane="review" style="display:none">${reviewTab}</div>
+        <div class="fd-pane" data-fpane="markdown" style="display:none">${mdTab}</div>
+        <div class="fd-pane" data-fpane="chunks" style="display:none">${chunksTab}</div>
+      </div>
+      <div class="fd-log-panel" id="fd-log-panel">
+        <div class="fd-log-header">
+          <span> Log tiến trình</span>
+          <span class="fd-log-status" id="fd-log-status">chưa có</span>
+          <button class="fd-log-toggle" onclick="toggleLogPanel()">Ẩn</button>
+        </div>
+        <pre id="fd-run-log"></pre>
+      </div>`,
+    onReady: (bd) => {
+      bd.querySelectorAll('.modal-tab').forEach(tab => {
+        tab.onclick = () => {
+          if(tab.disabled) return;
+          bd.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          bd.querySelectorAll('.fd-pane').forEach(p => p.style.display = 'none');
+          bd.querySelector(`.fd-pane[data-fpane="${tab.dataset.ftab}"]`).style.display = 'block';
+        };
+      });
+      bd.querySelectorAll('.chunk-head').forEach(h => {
+        h.onclick = () => { const c = h.nextElementSibling; c.style.display = c.style.display === 'block' ? 'none' : 'block'; };
+      });
+      const mdBtn = bd.querySelector('#fd-md-save');
+      if(mdBtn) mdBtn.onclick = () => saveMd(bd, baseName, 'md', '#fd-md-editor', '#fd-md-status');
+      const txtBtn = bd.querySelector('#fd-txt-save');
+      if(txtBtn) txtBtn.onclick = () => saveMd(bd, baseName, 'txt', '#fd-txt-editor', '#fd-txt-status');
+      const metaBtn = bd.querySelector('#fd-m-save');
+      if(metaBtn) metaBtn.onclick = () => saveMeta(bd, baseName);
+      // [FIX — MỚI] Lưu chunk đã sửa tay (content + trạng_thái).
+      const chunksBtn = bd.querySelector('#fd-chunks-save');
+      if(chunksBtn) chunksBtn.onclick = () => saveChunks(bd, baseName, chunkResp.chunks);
+      // [FIX — MỚI] Bulk status toolbar: chọn nhiều chunk + đổi trạng thái 1 lần
+      const chkAll = bd.querySelector('#chk-all');
+      const bulkBtn = bd.querySelector('#apply-bulk-status');
+      const bulkCount = bd.querySelector('#bulk-count');
+      function updateBulkCount(){
+        const n = bd.querySelectorAll('.chunk-select:checked').length;
+        if(bulkCount) bulkCount.textContent = n;
+        if(bulkBtn) bulkBtn.disabled = (n === 0);
+      }
+      if(chkAll) chkAll.onchange = () => {
+        bd.querySelectorAll('.chunk-select').forEach(c => c.checked = chkAll.checked);
+        updateBulkCount();
+      };
+      bd.querySelectorAll('.chunk-select').forEach(c => {
+        c.onchange = updateBulkCount;
+        // Ngăn click vào checkbox làm toggle mở/đóng .chunk-content (vì checkbox
+        // nằm trong .chunk-head có onclick toggle hiển thị).
+        c.onclick = (e) => e.stopPropagation();
+      });
+      if(bulkBtn) bulkBtn.onclick = () => {
+        const ids = [...bd.querySelectorAll('.chunk-select:checked')].map(c => parseInt(c.dataset.i, 10));
+        const target = bd.querySelector('#bulk-target-status').value;
+        if(ids.length === 0) return;
+        if(!confirm(`Đổi ${ids.length} chunk sang trạng thái "${target}"?\n\n` +
+                    `Nếu văn bản đã ở production, hệ thống tự rebuild-index FAISS.`)) return;
+        bulkUpdateChunkStatus(bd, baseName, chunkResp.chunks, ids, target);
+      };
+      // Nếu có log từ bước trước chưa clear (sessionStorage) → restore
+      try {
+        const saved = JSON.parse(sessionStorage.getItem('lastStepJob') || 'null');
+        if(saved && saved.baseName === baseName && saved.log){
+          setFdLog(saved.log.join('\n'));
+          updateLogStatus(saved.status, saved.ok, saved.step);
+        }
+      } catch(e){}
+    }
+  });
+}
+
+function toggleLogPanel(){
+  const panel = document.getElementById('fd-log-panel');
+  if(!panel) return;
+  const pre = panel.querySelector('#fd-run-log');
+  const btn = panel.querySelector('.fd-log-toggle');
+  if(pre.style.display === 'none'){
+    pre.style.display = 'block'; btn.textContent = 'Ẩn';
+  } else {
+    pre.style.display = 'none'; btn.textContent = 'Hiện';
+  }
+}
+
+function updateLogStatus(status, ok, step){
+  const el = document.getElementById('fd-log-status');
+  if(!el) return;
+  el.className = 'fd-log-status';
+  if(status === 'running' || status === 'queued'){
+    el.classList.add('running');
+    el.innerHTML = `<span class="spinner"></span>${step||''}: đang chạy...`;
+  } else if(status === 'done'){
+    el.classList.add(ok ? 'done-ok' : 'done-fail');
+    el.textContent = `${step||''}: ${ok ? '✅ xong' : '❌ thất bại'}`;
+  }
+}
+
+async function saveMeta(bd, baseName){
+  const c = getCfg();
+  const st = bd.querySelector('#fd-m-status');
+  const regenEl = bd.querySelector('#fd-m-regen');
+  const regen = !!(regenEl && regenEl.checked);
+  if(regen && !confirm('Sinh lại .md sẽ GHI ĐÈ HOÀN TOÀN nội dung .md hiện tại (mất mọi sửa tay). Tiếp tục?')) return;
+  st.textContent = '⏳ Đang lưu...';
+  const newMeta = {
+    loai_van_ban: bd.querySelector('#fd-m-loai').value,
+    tieu_de: bd.querySelector('#fd-m-tieude').value || null,
+    so_hieu: bd.querySelector('#fd-m-sohieu').value || null,
+    ngay_ban_hanh: bd.querySelector('#fd-m-ngay').value || null,
+    markdown_da_chinh_xac: bd.querySelector('#fd-m-md').checked,
+    tim_email_theo_header: bd.querySelector('#fd-m-email').checked,
+  };
+  try{
+    const r = await fetch(c.adminUrl + '/admin/review-meta', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({base_name: baseName, metadata_xac_nhan: newMeta, regenerate_md: regen})
+    });
+    const d = await r.json();
+    if(r.ok){
+      let msg = '✅ Đã lưu lúc ' + new Date().toLocaleTimeString();
+      if(d.warning) msg += ' · ⚠️ ' + d.warning;
+      if(d.note) msg += ' · ℹ️ ' + d.note;
+      st.textContent = msg; st.style.color = 'var(--success)';
+      if(regen) setTimeout(() => reloadCurrentModal(baseName), 1800);
+    }
+    else { st.textContent = '❌ ' + (d.error||r.status); st.style.color = 'var(--danger)'; }
+  }catch(e){ st.textContent = '❌ ' + e.message; st.style.color = 'var(--danger)'; }
+}
+
+async function saveMd(bd, baseName, stage, editorSel, statusSel){
+  const c = getCfg();
+  const ta = bd.querySelector(editorSel);
+  const st = bd.querySelector(statusSel);
+  if(!ta || !st) return;
+  st.textContent = '⏳ Đang lưu...';
+  try{
+    const r = await fetch(c.adminUrl + '/admin/markdown', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({base_name: baseName, stage, content: ta.value})
+    });
+    const dd = await r.json();
+    if(r.ok){
+      // [FIX] Trước đây chỉ báo "đã lưu" - .md được ghi đè nhưng chunk KHÔNG
+      // cập nhật (Admin phải tự nhớ bấm lại nút Chunk riêng, nếu tìm được nút
+      // đó - mà trước bản vá này thì nút Chunk còn bị ẩn mất khi đã chunk 1
+      // lần rồi). Nay /admin/markdown (stage=md) tự chạy Finalize lại + tự
+      // rebuild-index nếu văn bản đang production - hiện đầy đủ ở đây.
+      let msg = '✅ Đã lưu ' + new Date().toLocaleTimeString();
+      (dd.cascade||[]).forEach(step => { msg += ` · ${step.step}: ${step.ok ? 'OK' : 'LỖI'}`; });
+      if(dd.warning) msg += ' · ⚠️ ' + dd.warning;
+      st.textContent = msg;
+      st.style.color = (dd.cascade||[]).every(s=>s.ok) ? 'var(--success)' : 'var(--danger)';
+      if(stage === 'md' && (dd.cascade||[]).length) setTimeout(() => reloadCurrentModal(baseName), 1800);
+    }
+    else { st.textContent = '❌ ' + (dd.error||r.status); st.style.color = 'var(--danger)'; }
+  }catch(e){ st.textContent = '❌ ' + e.message; st.style.color = 'var(--danger)'; }
+}
+
+// [FIX — MỚI] Lưu chunk đã sửa tay - trước đây endpoint /admin/chunks chỉ có
+// GET, tab Chunks chỉ hiển thị tĩnh, không hề có đường lưu nào.
+async function saveChunks(bd, baseName, originalRows){
+  const c = getCfg();
+  const st = bd.querySelector('#fd-chunks-status');
+  st.textContent = '⏳ Đang lưu...';
+  const edited = originalRows.map((row, i) => {
+    const ta = bd.querySelector(`.chunk-content-edit[data-i="${i}"]`);
+    const sel = bd.querySelector(`.chunk-status-select[data-i="${i}"]`);
+    return {
+      chunk_id: row.chunk_id,
+      content: ta ? ta.value : row.content,
+      trang_thai: sel ? sel.value : row.trang_thai,
+    };
+  });
+  try{
+    const rr = await fetch(`${c.adminUrl}/admin/chunks`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({base_name: baseName, chunks: edited})
+    });
+    const dd = await rr.json();
+    if(rr.ok){
+      st.textContent = `✅ Đã lưu ${dd.updated.length} chunk.` +
+        (dd.was_in_production ? ` Đã rebuild-index: ${dd.rebuild && dd.rebuild.ok ? 'OK' : 'LỖI (xem log server)'}` : ' (chưa production - không cần rebuild)');
+      st.style.color = 'var(--success)';
+    } else {
+      st.textContent = '❌ ' + (dd.error||rr.status);
+      st.style.color = 'var(--danger)';
+    }
+  }catch(e){ st.textContent = '❌ ' + e.message; st.style.color = 'var(--danger)'; }
+}
+
+async function bulkUpdateChunkStatus(bd, baseName, originalRows, ids, target){
+  const c = getCfg();
+  const st = bd.querySelector('#fd-chunks-status');
+  st.textContent = `⏳ Đang đổi ${ids.length} chunk sang "${target}"...`;
+  const edited = ids.map(i => ({
+    chunk_id: originalRows[i].chunk_id,
+    trang_thai: target,
+  }));
+  try{
+    const rr = await fetch(`${c.adminUrl}/admin/chunks`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({base_name: baseName, chunks: edited})
+    });
+    const dd = await rr.json();
+    if(rr.ok){
+      st.textContent = `✅ Đã đổi ${dd.updated.length} chunk.` +
+        (dd.was_in_production
+          ? ` Rebuild-index: ${dd.rebuild && dd.rebuild.ok ? 'OK' : 'LỖI — xem log server'}`
+          : ' (chưa production, không cần rebuild)');
+      st.style.color = 'var(--success)';
+      if(dd.was_in_production) setTimeout(() => reloadCurrentModal(baseName), 2500);
+    } else {
+      st.textContent = '❌ ' + (dd.error||rr.status);
+      st.style.color = 'var(--danger)';
+    }
+  }catch(e){ st.textContent = '❌ ' + e.message; st.style.color = 'var(--danger)'; }
+}
+
+async function loadMeta(bd, baseName){
+  const c = getCfg();
+  const box = bd.querySelector('#fd-meta-body');
+  box.innerHTML = '<p class="hint"><span class="spinner"></span>Đang tải...</p>';
+  try{
+    const r = await fetch(`${c.adminUrl}/admin/review-meta?base_name=${encodeURIComponent(baseName)}`,
+                          {headers:{'X-API-Key': c.apiKey}});
+    const data = await r.json();
+    if(!r.ok){ box.innerHTML = `<p class="hint">${escHtml(data.error||r.status)}</p>`; return; }
+    const meta = data.metadata_xac_nhan || {};
+    const opts = (data.loai_van_ban_options||[]).map(o => `<option value="${escHtml(o)}"${o===meta.loai_van_ban?' selected':''}>${escHtml(o)}</option>`).join('');
+    box.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:12px;font-size:13px;max-width:600px">
+        <label>loai_van_ban<br><select id="fd-m-loai" style="width:100%;padding:6px">${opts}</select></label>
+        <label>tieu_de<br><input id="fd-m-tieude" value="${escHtml(meta.tieu_de||'')}" style="width:100%;padding:6px"></label>
+        <label>so_hieu<br><input id="fd-m-sohieu" value="${escHtml(meta.so_hieu||'')}" style="width:100%;padding:6px"></label>
+        <label>ngay_ban_hanh (YYYY-MM-DD)<br><input id="fd-m-ngay" value="${escHtml(meta.ngay_ban_hanh||'')}" style="width:100%;padding:6px"></label>
+        <label><input type="checkbox" id="fd-m-md" ${meta.markdown_da_chinh_xac?'checked':''}> markdown_da_chinh_xac</label>
+        <label><input type="checkbox" id="fd-m-email" ${meta.tim_email_theo_header?'checked':''}> tim_email_theo_header</label>
+        <div style="display:flex;gap:8px"><button class="btn-primary" id="fd-m-save">💾 Lưu</button>
+          <span id="fd-m-status" class="hint" style="align-self:center"></span></div>
+      </div>`;
+    box.querySelector('#fd-m-save').onclick = async () => {
+      const newMeta = {
+        loai_van_ban: box.querySelector('#fd-m-loai').value,
+        tieu_de: box.querySelector('#fd-m-tieude').value || null,
+        so_hieu: box.querySelector('#fd-m-sohieu').value || null,
+        ngay_ban_hanh: box.querySelector('#fd-m-ngay').value || null,
+        markdown_da_chinh_xac: box.querySelector('#fd-m-md').checked,
+        tim_email_theo_header: box.querySelector('#fd-m-email').checked,
+      };
+      const st = box.querySelector('#fd-m-status'); st.textContent = '⏳';
+      const rr = await fetch(c.adminUrl + '/admin/review-meta', {
+        method:'POST',
+        headers:{'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+        body: JSON.stringify({base_name: baseName, metadata_xac_nhan: newMeta})
+      });
+      const dd = await rr.json();
+      if(rr.ok){ st.textContent = '✅ Đã lưu'; st.style.color='var(--success)'; }
+      else { st.textContent = '❌ ' + (dd.error||rr.status); st.style.color='var(--danger)'; }
+    };
+  }catch(e){ box.innerHTML = `<p class="hint">❌ ${escHtml(e.message)}</p>`; }
+}
+
+// ============ FILES ============
+function setProcessOutput(txt){ document.getElementById('process-output').textContent = txt; }
+
+async function loadFiles(){
+  const c = getCfg(); const box = document.getElementById('files-list');
+  box.innerHTML = '<p class="hint"><span class="spinner"></span>Đang tải...</p>';
+  try{
+    const r = await fetch(c.adminUrl + '/admin/files', {headers:{'X-API-Key': c.apiKey}});
+    const data = await r.json();
+    if(!r.ok){ box.innerHTML = '<p class="hint">❌ ' + escHtml(data.error||r.status) + '</p>'; return; }
+    document.getElementById('files-count').textContent = `(${data.files.length} file)`;
+    if(!data.files.length){ box.innerHTML = '<p class="hint">Chưa có tài liệu nào.</p>'; return; }
+    box.innerHTML = data.files.map(renderFileRow).join('');
+  }catch(e){ box.innerHTML = '<p class="hint">❌ ' + escHtml(e.message) + '</p>'; }
+}
+
+function renderFileRow(f){
+  const b = [];
+  if(f.has_txt)    b.push('<span class="badge ok">.txt</span>');
+  if(f.has_review) b.push('<span class="badge ok">review</span>');
+  if(f.has_md)     b.push('<span class="badge ok">.md</span>');
+  if(f.has_chunk)  b.push('<span class="badge ok">chunks</span>');
+  if(f.in_production) b.push('<span class="badge prod">RAG · ' + escHtml(f.production_status||'active') + '</span>');
+
+  return `<div class="file-row" data-bn="${escHtml(f.base_name)}" data-ft="${escHtml(f.file_type)}">
+    <span class="name" data-act="open-detail" data-bn="${escHtml(f.base_name)}" data-ft="${escHtml(f.file_type)}">${escHtml(f.base_name)}</span>
+    <span class="type-badge">${escHtml(f.file_type)}</span>
+    <span class="meta">${f.size_kb} KB · ${escHtml(f.raw_mtime||'')}</span>
+    <div class="status-badges">${b.join('')}</div>
+    <div class="actions">
+      <button data-act="open-detail" data-bn="${escHtml(f.base_name)}" data-ft="${escHtml(f.file_type)}">📝 Chi tiết &amp; xử lý</button>
+      <button class="btn-danger" data-act="delete-file" data-bn="${escHtml(f.base_name)}" data-ft="${escHtml(f.file_type)}" title="Xóa file">🗑️</button>
+    </div>
+  </div>`;
+}
+
+// ============ UPLOAD ============
+const dz = document.getElementById('dropzone');
+const fi = document.getElementById('file-input');
+['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.add('drag'); }));
+['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.remove('drag'); }));
+dz.addEventListener('drop', e => { if(e.dataTransfer.files.length) for(const f of e.dataTransfer.files) uploadFile(f); });
+fi.addEventListener('change', () => { for(const f of fi.files) uploadFile(f); fi.value = ''; });
+
+async function uploadFile(file){
+  const c = getCfg();
+  const fd = new FormData(); fd.append('file', file);
+  setProcessOutput(`⏳ Đang upload ${file.name}...`);
+  try{
+    const r = await fetch(c.adminUrl + '/admin/upload', {method:'POST', headers:{'X-API-Key': c.apiKey}, body: fd});
+    const data = await r.json();
+    if(r.ok) setProcessOutput(`✅ Upload xong: ${data.filename}\n→ Mở "Chi tiết" để chạy "Chuẩn bị Markdown".`);
+    else     setProcessOutput(`❌ ${data.error||r.status}`);
+    loadFiles();
+  }catch(e){ setProcessOutput('❌ ' + e.message); }
+}
+
+// ============ CHAT ============
+let sessionId = localStorage.getItem('sessionId') || '';
+document.getElementById('session-id').textContent = sessionId || '(chưa có)';
+document.getElementById('chat-input').addEventListener('keydown', e=>{
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendChat(e); }
+});
+function resetSession(){
+  sessionId = ''; localStorage.removeItem('sessionId');
+  document.getElementById('session-id').textContent = '(chưa có)';
+  document.getElementById('chat-messages').innerHTML = '<div class="msg bot">Đã reset phiên.</div>';
+}
+function addMsg(role, html){
+  const box = document.getElementById('chat-messages');
+  const el = document.createElement('div');
+  el.className = 'msg ' + role; el.innerHTML = html;
+  box.appendChild(el); box.scrollTop = box.scrollHeight;
+  return el;
+}
+async function sendChat(e){
+  if(e && e.preventDefault) e.preventDefault();
+  const inp = document.getElementById('chat-input');
+  const q = inp.value.trim(); if(!q) return;
+  inp.value = '';
+  addMsg('user', escHtml(q));
+  const btn = document.getElementById('chat-send-btn'); btn.disabled = true;
+  const thinking = addMsg('bot', '<span class="spinner"></span>Đang xử lý...');
+  const c = getCfg();
+  try{
+    const r = await fetch(c.chatUrl + '/ask', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({prompt: q, session_id: sessionId || undefined})
+    });
+    const data = await r.json();
+    if(!r.ok){ thinking.innerHTML = '❌ ' + escHtml(data.error||r.status); }
+    else {
+      sessionId = data.session_id || ''; localStorage.setItem('sessionId', sessionId);
+      document.getElementById('session-id').textContent = sessionId || '(none)';
+      const md = data.content_markdown || '(không có nội dung)';
+      const html = window.marked ? marked.parse(md) : escHtml(md).replace(/\n/g,'<br>');
+      const meta = data.meta || {};
+      const rt = meta.response_time_ms ? `⏱️ ${Math.round(meta.response_time_ms)}ms · ${meta.model||''}` : '';
+      thinking.innerHTML = html + (rt ? `<div class="msg-meta">${rt}</div>` : '');
+    }
+  }catch(err){ thinking.innerHTML = '❌ ' + escHtml(err.message); }
+  finally{ btn.disabled = false; }
+}
+
+// ============ TABLES ============
+async function loadTables(){
+  const c = getCfg(); const box = document.getElementById('tables-list');
+  box.innerHTML = '<p class="hint"><span class="spinner"></span>Đang tải...</p>';
+  try{
+    const r = await fetch(c.adminUrl + '/admin/tables', {headers:{'X-API-Key': c.apiKey}});
+    const data = await r.json();
+    if(!r.ok){ box.innerHTML = '<p class="hint">❌ ' + escHtml(data.error||r.status) + '</p>'; return; }
+    if(!data.tables.length){ box.innerHTML = '<p class="hint">Chưa có bảng nào.</p>'; return; }
+    box.innerHTML = data.tables.map(t => `
+      <div class="table-row" data-act="open-table" data-name="${escHtml(t.name)}">
+        <div class="tname">${escHtml(t.name)}</div>
+        <div class="tmeta">PK: <code>${escHtml(String(t.primary_key||''))}</code> · ${t.n_rows} dòng · ${escHtml(t.path)}</div>
+        <div class="tmeta">${escHtml(t.description||'')}</div>
+      </div>`).join('');
+    const dl = document.getElementById('existing-table-names');
+    if(dl) dl.innerHTML = data.tables.map(t => `<option value="${escHtml(t.name)}">`).join('');
+    // Bổ sung handler cho table row
+    box.querySelectorAll('.table-row').forEach(el => {
+      el.onclick = () => openTableEditor(el.dataset.name);
+    });
+  }catch(e){ box.innerHTML = '<p class="hint">❌ ' + escHtml(e.message) + '</p>'; }
+}
+
+async function openTableEditor(name){
+  const c = getCfg();
+  const r = await fetch(`${c.adminUrl}/admin/table-preview?name=${encodeURIComponent(name)}`,
+                        {headers:{'X-API-Key': c.apiKey}});
+  const data = await r.json();
+  if(!r.ok){ alert('Lỗi: ' + (data.error||r.status)); return; }
+  const cols = data.columns || [];
+  const rows = data.rows || [];
+  const headHtml = cols.map(col => `<th>${escHtml(col)}</th>`).join('');
+  const bodyHtml = rows.map((row, ri) =>
+    `<tr>${cols.map((col, ci) => `<td contenteditable="true" data-r="${ri}" data-c="${ci}">${escHtml(row[col]||'')}</td>`).join('')}</tr>`
+  ).join('');
+  const modal = openModal({
+    title: `Bảng: ${name}`,
+    meta: `${data.path} — ${data.n_total} dòng (hiện ${rows.length} dòng đầu)`,
+    bodyHtml: `<div class="banner banner-warn">⚠️ Sửa ô trực tiếp → 💾 Lưu bảng. Tự backup + reload api8923.</div>
+      <div id="tbl-backups-panel" style="display:none;margin-bottom:10px"></div>
+      <div id="tbl-config-panel" style="display:none;margin-bottom:10px"></div>
+      <div class="table-wrap"><table><thead><tr>${headHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`,
+    footerHtml: `<span id="tbl-status" class="hint" style="margin-right:auto"></span>
+      <button id="tbl-config-btn">⚙️ Cấu hình cho chatbot</button>
+      <button id="tbl-backups-btn">🕐 Backup / Khôi phục</button>
+      <button class="btn-close-foot">Hủy</button>
+      <button class="btn-primary" id="tbl-save">💾 Lưu</button>`
+  });
+  modal.querySelector('.btn-close-foot').onclick = () => modal.remove();
+  modal.querySelector('#tbl-backups-btn').onclick = () => loadTableBackups(modal, name);
+  modal.querySelector('#tbl-config-btn').onclick = () => loadTableConfig(modal, name);
+  modal.querySelector('#tbl-save').onclick = async () => {
+    const st = modal.querySelector('#tbl-status');
+    st.textContent = '⏳ Đang lưu...';
+    const newRows = rows.map((_, ri) => {
+      const obj = {};
+      cols.forEach((col, ci) => {
+        const td = modal.querySelector(`td[data-r="${ri}"][data-c="${ci}"]`);
+        obj[col] = td ? td.textContent : '';
+      });
+      return obj;
+    });
+    const rr = await fetch(c.adminUrl + '/admin/table-update', {
+      method:'POST', headers:{'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({name, columns: cols, rows: newRows})
+    });
+    const dd = await rr.json();
+    if(rr.ok){ st.textContent = `✅ Đã lưu ${dd.n_rows} dòng. Reload: ${dd.reload}`; st.style.color='var(--success)'; }
+    else { st.textContent = '❌ ' + (dd.error||rr.status); st.style.color='var(--danger)'; }
+  };
+}
+
+async function loadTableBackups(modal, name){
+  const panel = modal.querySelector('#tbl-backups-panel');
+  const isOpen = panel.style.display !== 'none';
+  if(isOpen){ panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  panel.innerHTML = '<p class="hint"><span class="spinner"></span>Đang tải danh sách backup...</p>';
+  const c = getCfg();
+  try{
+    const r = await fetch(`${c.adminUrl}/admin/table-backups?name=${encodeURIComponent(name)}`, {headers:{'X-API-Key': c.apiKey}});
+    const data = await r.json();
+    if(!r.ok){ panel.innerHTML = '<p class="hint">❌ ' + escHtml(data.error||r.status) + '</p>'; return; }
+    const backups = data.backups || [];
+    let html = `<div class="banner banner-info">💾 Mỗi lần lưu/áp dụng đều tự backup trước khi ghi đè. `
+      + `Bản <b>đầu tiên</b> trong danh sách dưới đây (cũ nhất) thường là trạng thái TRƯỚC bất kỳ thay đổi/test nào hôm nay.</div>`;
+    if(!backups.length){
+      html += '<p class="hint">Chưa có backup nào cho bảng này.</p>';
+    } else {
+      html += '<div class="files-list">' + backups.map(b => `
+        <div class="table-row" style="cursor:default">
+          <div class="tname">${escHtml(b.filename)}</div>
+          <div class="tmeta">${escHtml(b.mtime)} · ${b.size_kb} KB</div>
+          <button data-file="${escHtml(b.filename)}" class="tbl-restore-btn" style="margin-top:6px">↩️ Khôi phục về bản này</button>
+        </div>`).join('') + '</div>';
+    }
+    html += `<button id="tbl-remove-btn" style="margin-top:10px;color:var(--danger);border-color:var(--danger)">🗑 Xóa hẳn bảng "${escHtml(name)}" khỏi hệ thống</button>
+      <div class="hint" style="margin-top:4px">Chỉ dùng khi bảng này được tạo NHẦM (vd gõ sai tên lúc phân tích/áp dụng) — file .csv vẫn được backup lại, không mất hẳn.</div>`;
+    panel.innerHTML = html;
+    panel.querySelectorAll('.tbl-restore-btn').forEach(btn => {
+      btn.onclick = () => restoreTableBackup(modal, name, btn.dataset.file);
+    });
+    panel.querySelector('#tbl-remove-btn').onclick = () => removeStructuredTable(modal, name);
+  }catch(e){ panel.innerHTML = '<p class="hint">❌ ' + escHtml(e.message) + '</p>'; }
+}
+
+async function pollJobRaw(jobId, onTick){
+  const c = getCfg();
+  let fromIdx = 0; const allLines = [];
+  async function poll(){
+    try{
+      const r = await fetch(`${c.adminUrl}/admin/job/${jobId}?from=${fromIdx}`, {headers:{'X-API-Key': c.apiKey}});
+      const data = await r.json();
+      if(data.log && data.log.length){ for(const ln of data.log) allLines.push(ln); fromIdx = data.log_total; }
+      onTick(Object.assign({}, data, {log: allLines}));
+      if(data.status !== 'done') setTimeout(poll, 800);
+    }catch(e){ allLines.push('[Polling lỗi] ' + e.message); onTick({status:'done', ok:false, log: allLines}); }
+  }
+  setTimeout(poll, 300);
+}
+
+async function restoreTableBackup(modal, name, backupFilename){
+  if(!confirm(`Khôi phục bảng "${name}" về bản "${backupFilename}"?\n\nBản HIỆN TẠI sẽ tự được backup lại trước khi ghi đè (không mất dữ liệu), nhưng mọi thay đổi từ giờ tới lúc backup đó sẽ bị THAY THẾ.`)) return;
+  const panel = modal.querySelector('#tbl-backups-panel');
+  panel.innerHTML = '<p class="hint"><span class="spinner"></span>Đang khôi phục...</p>';
+  const c = getCfg();
+  try{
+    const r = await fetch(c.adminUrl + '/admin/restore-table-backup', {
+      method:'POST', headers:{'Content-Type':'application/json','X-API-Key': c.apiKey},
+      body: JSON.stringify({name, backup_filename: backupFilename})
+    });
+    const data = await r.json();
+    if(!r.ok || !data.job_id){ panel.innerHTML = '❌ ' + escHtml(data.error||r.status); return; }
+    pollJobRaw(data.job_id, (jobData) => {
+      panel.innerHTML = `<pre class="output-block">${escHtml((jobData.log||[]).join('\n'))}</pre>`
+        + (jobData.status === 'done' ? (jobData.ok
+            ? '<div class="banner banner-ok">✅ Đã khôi phục. Đóng và mở lại bảng để xem dữ liệu mới.</div>'
+            : '<div class="banner banner-error">❌ Khôi phục lỗi, xem log trên.</div>') : '');
+      if(jobData.status === 'done') loadTables();
+    });
+  }catch(e){ panel.innerHTML = '❌ ' + escHtml(e.message); }
+}
+
+async function removeStructuredTable(modal, name){
+  const typed = prompt(`Bảng "${name}" sẽ bị XÓA khỏi registry (file .csv vẫn được backup lại). Chỉ dùng khi bảng này được tạo NHẦM. Gõ đúng tên bảng "${name}" để xác nhận:`);
+  if(typed !== name){ if(typed !== null) alert('Tên không khớp - đã hủy.'); return; }
+  const panel = modal.querySelector('#tbl-backups-panel');
+  panel.innerHTML = '<p class="hint"><span class="spinner"></span>Đang xóa...</p>';
+  const c = getCfg();
+  try{
+    const r = await fetch(c.adminUrl + '/admin/remove-structured-table', {
+      method:'POST', headers:{'Content-Type':'application/json','X-API-Key': c.apiKey},
+      body: JSON.stringify({name})
+    });
+    const data = await r.json();
+    if(!r.ok || !data.job_id){ panel.innerHTML = '❌ ' + escHtml(data.error||r.status); return; }
+    pollJobRaw(data.job_id, (jobData) => {
+      panel.innerHTML = `<pre class="output-block">${escHtml((jobData.log||[]).join('\n'))}</pre>`;
+      if(jobData.status === 'done' && jobData.ok){ loadTables(); setTimeout(() => modal.remove(), 1200); }
+    });
+  }catch(e){ panel.innerHTML = '❌ ' + escHtml(e.message); }
+}
+
+async function loadTableConfig(modal, name){
+  const panel = modal.querySelector('#tbl-config-panel');
+  const isOpen = panel.style.display !== 'none';
+  if(isOpen){ panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  panel.innerHTML = '<p class="hint"><span class="spinner"></span>Đang tải cấu hình...</p>';
+  const c = getCfg();
+  try{
+    const r = await fetch(`${c.adminUrl}/admin/table-config?name=${encodeURIComponent(name)}`, {headers:{'X-API-Key': c.apiKey}});
+    const data = await r.json();
+    if(!r.ok || !data.ok){ panel.innerHTML = '<p class="hint">❌ ' + escHtml(data.error||r.status) + '</p>'; return; }
+    panel.innerHTML = `<div id="editmeta-root"></div>
+      <button class="btn-primary" id="editmeta-save-btn" style="margin-top:10px">💾 Lưu cấu hình</button>
+      <span id="editmeta-save-status" class="hint" style="margin-left:8px"></span>`;
+    renderMetadataFormInto('editmeta', data.columns, data.gia_tri_duy_nhat, data.metadata, false);
+    panel.querySelector('#editmeta-save-btn').onclick = () => saveTableConfig(name);
+  }catch(e){ panel.innerHTML = '<p class="hint">❌ ' + escHtml(e.message) + '</p>'; }
+}
+
+async function saveTableConfig(name){
+  const metadata = collectMetadataFrom('editmeta');
+  if(!metadata.description){ alert('Nhập mô tả bảng trước khi lưu.'); return; }
+  const status = document.getElementById('editmeta-save-status');
+  status.innerHTML = '<span class="spinner"></span>Đang lưu...';
+  const c = getCfg();
+  let jobId;
+  try{
+    const r = await fetch(c.adminUrl + '/admin/update-table-config', {
+      method: 'POST', headers: {'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({name, metadata})
+    });
+    const data = await r.json();
+    if(!r.ok || !data.job_id){ status.textContent = '❌ ' + (data.error||r.status); return; }
+    jobId = data.job_id;
+  }catch(e){ status.textContent = '❌ ' + e.message; return; }
+
+  pollJobRaw(jobId, (jobData) => {
+    if(jobData.status !== 'done'){ status.innerHTML = '<span class="spinner"></span>Đang lưu...'; return; }
+    status.textContent = jobData.ok ? '✅ Đã lưu cấu hình.' : '❌ Lỗi khi lưu, xem log.';
+    if(jobData.ok) loadTables();
+  });
+}
+
+// ============ XUNG ĐỘT CHÉO: văn bản (RAG) mâu thuẫn với bảng cấu trúc ============
+let pendingCrossGroups = [];
+let pendingCrossActions = {}; // `${gi}|${warning_id}` -> {action, noi_dung_moi}
+
+async function loadPendingCrossConflicts(){
+  const box = document.getElementById('pending-cross-list');
+  box.innerHTML = '<p class="hint"><span class="spinner"></span>Đang tải...</p>';
+  const c = getCfg();
+  try{
+    const r = await fetch(c.adminUrl + '/admin/pending-cross-conflicts', {headers:{'X-API-Key': c.apiKey}});
+    const data = await r.json();
+    if(!r.ok || !data.ok){ box.innerHTML = '<p class="hint">❌ ' + escHtml(data.error||r.status) + '</p>'; return; }
+    pendingCrossGroups = data.groups || [];
+    document.getElementById('pending-cross-count').textContent = `${data.tong_so} cảnh báo, ${pendingCrossGroups.length} văn bản`;
+    if(!pendingCrossGroups.length){ box.innerHTML = '<p class="hint">✅ Không có cảnh báo chéo nào đang chờ.</p>'; return; }
+    pendingCrossActions = {};
+    box.innerHTML = pendingCrossGroups.map((g, gi) => {
+      g.items.forEach(it => { pendingCrossActions[`${gi}|${it.warning_id}`] = {action: 'giu_doan', noi_dung_moi: ''}; });
+      return `<div style="margin-bottom:16px">
+        <h3 style="font-size:14px;margin:6px 0">📄 ${escHtml(g.base_name)} <span class="hint">(${g.items.length} cảnh báo)</span></h3>
+        <div class="files-list" id="pending-cross-group-${gi}"></div>
+        <button class="btn-primary" style="margin-top:8px" onclick="applyPendingCrossGroup(${gi})">✅ Áp dụng quyết định cho văn bản này</button>
+        <div class="hint" id="pending-cross-status-${gi}" style="margin-top:4px"></div>
+      </div>`;
+    }).join('');
+    pendingCrossGroups.forEach((g, gi) => renderPendingCrossItems(gi));
+  }catch(e){ box.innerHTML = '<p class="hint">❌ ' + escHtml(e.message) + '</p>'; }
+}
+
+function renderPendingCrossItems(gi){
+  const g = pendingCrossGroups[gi];
+  const list = document.getElementById(`pending-cross-group-${gi}`);
+  if(!list) return;
+  list.innerHTML = g.items.map(it => `
+    <div class="decision-row" data-warning-id="${it.warning_id}">
+      <div class="drow-title">Đối tượng: "${escHtml(it.ten_thuc_the)}" (bảng "${escHtml(it.table)}", khóa=${escHtml(it.pk_value)}) — thuộc tính: ${escHtml(it.cot)}</div>
+      <div class="drow-diff">Giá trị hiện tại trong bảng: <span class="old-val">${escHtml(it.gia_tri_bang)}</span></div>
+      <div class="drow-diff">Văn bản mới đang nói: <span class="new-val">${escHtml(it.gia_tri_van_ban)}</span></div>
+      <div class="hint" style="margin-top:4px">Trích dẫn: "${escHtml(it.trich_dan||'')}"</div>
+      <details style="margin-top:4px"><summary class="hint" style="cursor:pointer">Xem toàn văn đoạn văn bản</summary>
+        <div class="hint" style="white-space:pre-wrap;margin-top:4px">${escHtml((it.noi_dung_day_du||'').slice(0,1000))}</div></details>
+      <div class="decision-btns" data-warning-id="${it.warning_id}">
+        <button data-action="giu_doan" class="active">Giữ đoạn nguyên trạng</button>
+        <button data-action="loai_doan">Loại đoạn</button>
+        <button data-action="sua_doan">Sửa đoạn</button>
+        <button data-action="sua_bang">Sửa giá trị bảng theo văn bản</button>
+      </div>
+      <textarea placeholder="Nội dung đoạn đã sửa..." style="display:none"></textarea>
+    </div>`).join('');
+  list.querySelectorAll('.decision-row').forEach(row => {
+    const wid = parseInt(row.dataset.warningId);
+    const key = `${gi}|${wid}`;
+    const ta = row.querySelector('textarea');
+    row.querySelectorAll('.decision-btns button').forEach(btn => {
+      btn.onclick = () => {
+        const action = btn.dataset.action;
+        pendingCrossActions[key].action = action;
+        row.querySelectorAll('.decision-btns button').forEach(b => b.classList.toggle('active', b === btn));
+        ta.style.display = action === 'sua_doan' ? 'block' : 'none';
+      };
+    });
+    ta.addEventListener('input', () => { pendingCrossActions[key].noi_dung_moi = ta.value; });
+  });
+}
+
+async function applyPendingCrossGroup(gi){
+  const group = pendingCrossGroups[gi];
+  if(!group) return;
+  const decisions = group.items.map(it => Object.assign({}, it, pendingCrossActions[`${gi}|${it.warning_id}`]));
+  if(!confirm(`Áp dụng ${decisions.length} quyết định cho văn bản "${group.base_name}"?`)) return;
+  const status = document.getElementById(`pending-cross-status-${gi}`);
+  status.innerHTML = '<span class="spinner"></span>Đang áp dụng...';
+  const c = getCfg();
+  let jobId;
+  try{
+    const r = await fetch(c.adminUrl + '/admin/apply-cross-conflict-decisions', {
+      method: 'POST', headers: {'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({base_name: group.base_name, decisions})
+    });
+    const data = await r.json();
+    if(!r.ok || !data.job_id){ status.textContent = '❌ ' + (data.error||r.status); return; }
+    jobId = data.job_id;
+  }catch(e){ status.textContent = '❌ ' + e.message; return; }
+  pollJobRaw(jobId, (jobData) => {
+    if(jobData.status !== 'done'){ status.innerHTML = '<span class="spinner"></span>Đang chạy...'; return; }
+    status.textContent = jobData.ok ? '✅ Đã áp dụng.' : '❌ Lỗi, xem log.';
+    if(jobData.ok) loadPendingCrossConflicts();
+  });
+}
+
+// ============ UPLOAD BẢNG: preview cột + kéo-thả chọn khóa + job log ============
+let csvPreviewToken = null;
+let csvAllColumns = [];
+
+function getKeyCols(){
+  return Array.from(document.getElementById('csv-cols-key').children).map(el => el.dataset.col);
+}
+
+function renderChip(col, inKey){
+  const chip = document.createElement('div');
+  chip.className = 'chip' + (inKey ? ' key-chip' : '');
+  chip.draggable = true;
+  chip.dataset.col = col;
+  chip.innerHTML = `<span>${escHtml(col)}</span>` + (inKey ? '<span class="chip-x" title="Bỏ khỏi khóa">×</span>' : '');
+  chip.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('text/plain', col);
+    setTimeout(() => chip.classList.add('dragging'), 0);
+  });
+  chip.addEventListener('dragend', () => chip.classList.remove('dragging'));
+  if(inKey) chip.querySelector('.chip-x').onclick = () => moveColumn(col, false);
+  return chip;
+}
+
+function moveColumn(col, toKey){
+  const keyBox = document.getElementById('csv-cols-key');
+  const availBox = document.getElementById('csv-cols-available');
+  [keyBox, availBox].forEach(box => {
+    const el = box.querySelector(`[data-col="${CSS.escape(col)}"]`);
+    if(el) el.remove();
+  });
+  (toKey ? keyBox : availBox).appendChild(renderChip(col, toKey));
+}
+
+function setupChipZone(id, isKeyZone){
+  const box = document.getElementById(id);
+  box.addEventListener('dragover', e => { e.preventDefault(); box.classList.add('drag-over'); });
+  box.addEventListener('dragleave', () => box.classList.remove('drag-over'));
+  box.addEventListener('drop', e => {
+    e.preventDefault(); box.classList.remove('drag-over');
+    const col = e.dataTransfer.getData('text/plain');
+    if(col) moveColumn(col, isKeyZone);
+  });
+}
+setupChipZone('csv-cols-available', false);
+setupChipZone('csv-cols-key', true);
+
+async function previewStructuredFile(){
+  const f = document.getElementById('csv-file').files[0];
+  const status = document.getElementById('csv-preview-status');
+  const picker = document.getElementById('csv-key-picker');
+  const sampleWrap = document.getElementById('csv-sample-wrap');
+  if(!f){
+    status.textContent = '(chưa chọn file)'; picker.style.display = 'none';
+    sampleWrap.style.display = 'none'; csvPreviewToken = null; return;
+  }
+  const name = document.getElementById('table-name').value.trim();
+  status.innerHTML = '<span class="spinner"></span>Đang đọc cột...';
+  const c = getCfg();
+  const fd = new FormData();
+  fd.append('file', f);
+  if(name) fd.append('table_name', name);
+  try{
+    const r = await fetch(c.adminUrl + '/admin/preview-structured-table', {method:'POST', headers:{'X-API-Key': c.apiKey}, body: fd});
+    const data = await r.json();
+    if(!r.ok){ status.textContent = '❌ ' + (data.error||r.status); picker.style.display = 'none'; csvPreviewToken = null; return; }
+    csvPreviewToken = data.preview_token;
+    csvAllColumns = data.columns;
+
+    let msg = `✅ ${data.n_rows} dòng, ${data.columns.length} cột.`;
+    if(data.existing_table) msg += ` Bảng đã có sẵn — khóa chính hiện tại: <code>${escHtml(String(data.existing_primary_key))}</code> (đã chọn sẵn bên dưới, có thể kéo đổi khác cho lần so khớp này).`;
+    else if(data.suggested_table) msg += ` ⚠️ Cột khớp ${Math.round(data.suggested_table.ratio*100)}% với bảng đã có <b>${escHtml(data.suggested_table.name)}</b> — kiểm tra lại xem có gõ nhầm tên bảng không.`;
+    else msg += ` Bảng mới — bắt buộc chọn khóa chính bên dưới.`;
+    status.innerHTML = msg;
+
+    const preselect = data.existing_primary_key
+      ? (Array.isArray(data.existing_primary_key) ? data.existing_primary_key : [data.existing_primary_key])
+      : [];
+    document.getElementById('csv-cols-available').innerHTML = '';
+    document.getElementById('csv-cols-key').innerHTML = '';
+    csvAllColumns.forEach(col => moveColumn(col, preselect.includes(col)));
+    picker.style.display = 'flex';
+
+    const rows = data.sample_rows || [];
+    if(rows.length){
+      const head = csvAllColumns.map(cn => `<th>${escHtml(cn)}</th>`).join('');
+      const body = rows.map(row => `<tr>${csvAllColumns.map(cn => `<td>${escHtml(row[cn]||'')}</td>`).join('')}</tr>`).join('');
+      document.getElementById('csv-sample-table').innerHTML = `<thead><tr>${head}</tr></thead><tbody>${body}</tbody>`;
+      sampleWrap.style.display = 'block';
+    } else sampleWrap.style.display = 'none';
+  }catch(e){ status.textContent = '❌ ' + e.message; picker.style.display = 'none'; csvPreviewToken = null; }
+}
+document.getElementById('csv-file').addEventListener('change', previewStructuredFile);
+document.getElementById('table-name').addEventListener('change', () => { if(csvPreviewToken) previewStructuredFile(); });
+
+function setJobStatusEl(id, status, ok, label){
+  const el = document.getElementById(id);
+  if(status === 'queued') el.textContent = `⏳ Đang khởi động (${label})...`;
+  else if(status === 'running') el.textContent = `▶ Đang chạy (${label})...`;
+  else if(status === 'done') el.textContent = ok ? `✅ Hoàn tất (${label})` : `❌ Thất bại (${label})`;
+}
+
+async function pollTableJob(jobId, logElId, statusElId, label, onDone){
+  const c = getCfg();
+  const logEl = document.getElementById(logElId);
+  let fromIdx = 0; const allLines = [];
+  async function poll(){
+    try{
+      const r = await fetch(`${c.adminUrl}/admin/job/${jobId}?from=${fromIdx}`, {headers:{'X-API-Key': c.apiKey}});
+      const data = await r.json();
+      if(data.log && data.log.length){
+        for(const ln of data.log) allLines.push(ln);
+        fromIdx = data.log_total;
+        logEl.textContent = allLines.join('\n');
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+      setJobStatusEl(statusElId, data.status, data.ok, label);
+      if(data.status === 'done'){ onDone(data); return; }
+      setTimeout(poll, 800);
+    }catch(e){
+      allLines.push('[Polling lỗi] ' + e.message);
+      logEl.textContent = allLines.join('\n');
+    }
+  }
+  setTimeout(poll, 400);
+}
+
+async function analyzeStructuredUpload(forceNew){
+  const name = document.getElementById('table-name').value.trim();
+  const keyCols = getKeyCols();
+  if(!csvPreviewToken) return alert('Chọn file trước (hệ thống cần đọc cột).');
+  if(!name) return alert('Nhập tên bảng.');
+  if(!keyCols.length) return alert('Kéo ít nhất 1 cột vào khung "Khóa chính".');
+
+  document.getElementById('csv-review').style.display = 'none';
+  const logEl = document.getElementById('csv-analyze-log');
+  logEl.style.display = 'block'; logEl.textContent = '';
+  setJobStatusEl('csv-analyze-status', 'queued', null, 'phân tích');
+  const c = getCfg();
+  let jobId;
+  try{
+    const r = await fetch(c.adminUrl + '/admin/analyze-structured-upload', {
+      method: 'POST', headers: {'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({preview_token: csvPreviewToken, table_name: name, key_cols: keyCols, force_new: !!forceNew})
+    });
+    const data = await r.json();
+    if(!r.ok || !data.job_id){
+      logEl.textContent = '❌ ' + (data.error||r.status);
+      setJobStatusEl('csv-analyze-status', 'done', false, 'phân tích');
+      return;
+    }
+    jobId = data.job_id;
+  }catch(e){
+    logEl.textContent = '❌ ' + e.message;
+    setJobStatusEl('csv-analyze-status', 'done', false, 'phân tích');
+    return;
+  }
+
+  pollTableJob(jobId, 'csv-analyze-log', 'csv-analyze-status', 'phân tích', (data) => {
+    if(data.ok && data.result && data.result.ok){ renderCsvReview(data.result); }
+    else { alert('Phân tích lỗi: ' + ((data.result && data.result.error) || 'xem log ở trên để biết chi tiết')); }
+  });
+}
+
+let csvAnalyzeResult = null;
+let csvThayDoiActions = {};   // row_id -> action
+let csvCheoActions = {};      // warning_id -> {action, noi_dung_moi}
+let csvMetadata = {};         // form metadata cho bảng THẬT SỰ mới
+
+function renderCsvReview(result){
+  csvAnalyzeResult = result;
+  csvThayDoiActions = {}; csvCheoActions = {};
+  csvMetadata = {description: '', name_columns: [], role_columns: [], group_columns: [],
+                 pii_columns: [], hidden_columns: [], has_related_text_corpus: false, extra_instructions: ''};
+  result.thay_doi.forEach(item => { csvThayDoiActions[item.row_id] = 'giu_cu'; });
+  result.canh_bao_cheo.forEach(cb => { csvCheoActions[cb.warning_id] = {action: 'giu_rag', noi_dung_moi: ''}; });
+
+  document.getElementById('csv-review-summary').innerHTML =
+    `<b>Kết quả phân tích bảng "${escHtml(result.table_name)}"</b>${result.bang_moi ? ' (bảng MỚI)' : ''}: `
+    + `${result.so_moi} dòng mới (sẽ tự động thêm) · ${result.so_trung_lap} trùng lặp hoàn toàn (bỏ qua) · `
+    + `<b>${result.thay_doi.length} dòng thay đổi cần bạn xác nhận</b> · `
+    + `<b>${result.canh_bao_cheo.length} cảnh báo chéo với RAG cần bạn xác nhận</b>.`;
+
+  let warnHtml = '';
+  if(result.ten_khop_tu_dong){
+    const tk = result.ten_khop_tu_dong;
+    const pct = Math.round(tk.ty_le * 100);
+    warnHtml += `<div class="banner banner-warn">🔎 Bạn gõ tên bảng "<b>${escHtml(tk.ten_da_go)}</b>" nhưng chưa tồn tại — cột file khớp ${pct}% `
+      + `với bảng đã có <b>${escHtml(tk.ten)}</b>, nên hệ thống <b>đang tự so sánh với bảng "${escHtml(tk.ten)}"</b> ở dưới đây `
+      + `(không cần bạn gõ đúng tên, hệ thống tự nhận diện). Nếu đây thực sự là 2 loại dữ liệu khác nhau, bấm nút dưới để tách riêng:<br>`
+      + `<button onclick="forceNewSeparateTable('${escHtml(tk.ten_da_go).replace(/'/g,"\\'")}')" style="margin-top:6px">`
+      + `❌ Không, đây là dữ liệu tách biệt — tạo bảng mới riêng "${escHtml(tk.ten_da_go)}"</button></div>`;
+  }
+  (result.canh_bao_khoa || []).forEach(w => { warnHtml += `<div class="banner banner-warn">⚠️ ${escHtml(w)}</div>`; });
+  document.getElementById('csv-review-warnings').innerHTML = warnHtml;
+
+  const metaSection = document.getElementById('csv-metadata-section');
+  if(result.bang_moi){
+    metaSection.style.display = 'block';
+    document.getElementById('csv-metadata-title').textContent = '🆕 Bảng MỚI — khai báo để chatbot dùng được tốt';
+    renderMetadataFormInto('csvmeta', result.columns || result.columns_goc || [], result.gia_tri_duy_nhat, null, true);
+  } else {
+    metaSection.style.display = 'none';
+  }
+
+  const thaydoiSection = document.getElementById('csv-thaydoi-section');
+  const thaydoiList = document.getElementById('csv-thaydoi-list');
+  if(result.thay_doi.length){
+    thaydoiSection.style.display = 'block';
+    thaydoiList.innerHTML = result.thay_doi.map(item => {
+      const diffs = Object.entries(item.khac_cols).map(([col, gt]) =>
+        `<div class="drow-diff"><b>${escHtml(col)}</b>: <span class="old-val">${escHtml(gt.cu==null?'(rỗng)':gt.cu)}</span>`
+        + ` → <span class="new-val">${escHtml(gt.moi==null?'(rỗng)':gt.moi)}</span></div>`
+      ).join('');
+      return `<div class="decision-row" data-row-id="${item.row_id}">
+        <div class="drow-title">Khóa: ${escHtml(JSON.stringify(item.key))}</div>
+        ${diffs}
+        <div class="decision-btns" data-kind="thaydoi" data-row-id="${item.row_id}">
+          <button data-action="giu_moi">Giữ bản mới</button>
+          <button data-action="giu_cu" class="active">Giữ bản cũ</button>
+          <button data-action="giu_ca_2">Giữ cả 2</button>
+        </div>
+      </div>`;
+    }).join('');
+    thaydoiList.querySelectorAll('.decision-btns[data-kind="thaydoi"]').forEach(box => {
+      const rid = parseInt(box.dataset.rowId);
+      box.querySelectorAll('button').forEach(btn => {
+        btn.onclick = () => {
+          csvThayDoiActions[rid] = btn.dataset.action;
+          box.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+        };
+      });
+    });
+  } else thaydoiSection.style.display = 'none';
+
+  const cheoSection = document.getElementById('csv-cheo-section');
+  cheoSection.style.display = result.canh_bao_cheo.length ? 'block' : 'none';
+  renderCheoList(result.canh_bao_cheo);
+
+  const box = document.getElementById('csv-review');
+  box.style.display = 'block';
+  box.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+}
+
+function forceNewSeparateTable(originalName){
+  document.getElementById('table-name').value = originalName;
+  document.getElementById('csv-review').style.display = 'none';
+  analyzeStructuredUpload(true);
+}
+
+// ============ FORM METADATA BẢNG - dùng CHUNG cho "khai báo bảng mới"
+// (upload) và "sửa cấu hình bảng đã có" (click bảng trong tab Bảng dữ
+// liệu) - tránh viết 2 bản gần giống nhau. Mỗi lần dùng truyền 1 prefix
+// riêng (id DOM không đụng nhau nếu vô tình cả 2 cùng mở). ============
+function _goiYNameCols(cols){ return cols.filter(c => /ten|name|ho_ten|hoten/i.test(c)); }
+function _goiYHiddenCols(cols){ return cols.filter(c => /^unnamed/i.test(c)); }
+function _goiYPiiCols(cols){ return cols.filter(c => /email|mobile|phone|dien_thoai|adress|address|cccd|cmnd/i.test(c)); }
+
+function _pickerGroupHtml(prefix, key, title, hint, cols, preselected){
+  preselected = preselected || [];
+  return `<div class="col-picker-group">
+    <div class="col-picker-title">${title} <span class="hint">${hint}</span></div>
+    <div class="chip-zone" id="${prefix}-${key}">${cols.map(c => `
+      <label class="col-check"><input type="checkbox" value="${escHtml(c)}" ${preselected.includes(c)?'checked':''}> ${escHtml(c)}</label>
+    `).join('')}</div>
+  </div>`;
+}
+
+function _catFilterRowHtml(distinctValues, colVal, val, keywords){
+  const cols = Object.keys(distinctValues || {});
+  return `<div class="cf-row" style="display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap">
+    <select class="cf-col" style="flex:1;min-width:120px">
+      <option value="">-- cột --</option>
+      ${cols.map(c => `<option value="${escHtml(c)}" ${c===colVal?'selected':''}>${escHtml(c)}</option>`).join('')}
+    </select>
+    <select class="cf-val" style="flex:1;min-width:120px">${colVal ? (distinctValues[colVal]||[]).map(v=>`<option value="${escHtml(v)}" ${v===val?'selected':''}>${escHtml(v)}</option>`).join('') : ''}</select>
+    <input class="cf-keywords" placeholder="từ khóa trong câu hỏi, cách nhau bởi dấu phẩy" value="${escHtml(keywords||'')}" style="flex:2;min-width:160px;padding:5px 8px;border:1px solid var(--border);border-radius:4px">
+    <button type="button" class="cf-remove">✕</button>
+  </div>`;
+}
+
+function addCatFilterRow(prefix, distinctValues, colVal, val, keywords){
+  const box = document.getElementById(`${prefix}-catfilters-rows`);
+  if(!box) return;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = _catFilterRowHtml(distinctValues, colVal, val, keywords);
+  const row = wrap.firstElementChild;
+  box.appendChild(row);
+  const colSel = row.querySelector('.cf-col'), valSel = row.querySelector('.cf-val');
+  colSel.onchange = () => {
+    const c = colSel.value;
+    valSel.innerHTML = c ? (distinctValues[c]||[]).map(v => `<option value="${escHtml(v)}">${escHtml(v)}</option>`).join('') : '';
+  };
+  row.querySelector('.cf-remove').onclick = () => row.remove();
+}
+
+function collectCatFilters(prefix){
+  const rows = document.querySelectorAll(`#${prefix}-catfilters-rows .cf-row`);
+  const result = {};
+  rows.forEach(row => {
+    const col = row.querySelector('.cf-col').value;
+    const val = row.querySelector('.cf-val').value;
+    const kwRaw = row.querySelector('.cf-keywords').value.trim();
+    if(!col || !val || !kwRaw) return;
+    const kws = kwRaw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    if(!kws.length) return;
+    result[col] = result[col] || {};
+    kws.forEach(kw => { result[col][kw] = val; });
+  });
+  return result;
+}
+
+// existing: metadata hiện tại (sửa bảng đã có) hoặc null (bảng mới hoàn
+// toàn - lúc đó tự gợi ý theo tên cột). showRecheck: chỉ true lúc upload
+// mới (cần staging_token của lượt phân tích vừa chạy, sửa bảng cũ dữ liệu
+// đã ở production nên đối chiếu chéo chạy qua bước "check" văn bản, không
+// qua đây).
+function renderMetadataFormInto(prefix, cols, distinctValues, existing, showRecheck){
+  const root = document.getElementById(`${prefix}-root`);
+  if(!root) return;
+  existing = existing || {};
+  distinctValues = distinctValues || {};
+  const suggestName = existing.name_columns && existing.name_columns.length ? existing.name_columns : _goiYNameCols(cols);
+  const suggestHidden = existing.hidden_columns && existing.hidden_columns.length ? existing.hidden_columns : _goiYHiddenCols(cols);
+  const suggestPii = existing.pii_columns && existing.pii_columns.length ? existing.pii_columns : _goiYPiiCols(cols);
+
+  root.innerHTML = `
+    <div class="banner banner-info">💡 Các thông tin dưới đây quyết định chatbot có tra được bảng này không, có ẩn được dữ liệu nhạy cảm không, và có đối chiếu được với văn bản không.</div>
+    <label style="display:block;margin:8px 0 4px">Mô tả bảng (chatbot dùng để biết KHI NÀO nên tra bảng này) <span style="color:var(--danger)">*</span></label>
+    <textarea id="${prefix}-description" placeholder="vd: Danh sách giảng viên: họ tên, học hàm/học vị, chức vụ, đơn vị công tác, liên hệ." style="width:100%;min-height:50px;padding:6px 8px;border:1px solid var(--border);border-radius:5px;font-family:inherit">${escHtml(existing.description||'')}</textarea>
+    <div id="${prefix}-columns-pickers"></div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-top:10px">
+      <input type="checkbox" id="${prefix}-has-rag" ${showRecheck ? `onchange="onMetaHasRagChange('${prefix}')"` : ''} ${existing.has_related_text_corpus?'checked':''}>
+      Dữ liệu bảng này có được nhắc tới trong văn bản (RAG) đang có trong hệ thống không?
+    </label>
+    ${showRecheck ? `<div id="${prefix}-recheck-wrap" style="display:${existing.has_related_text_corpus?'block':'none'};margin-top:6px">
+      <button onclick="recheckCrossRag()">🔍 Kiểm tra chéo với RAG ngay</button>
+      <span id="${prefix}-recheck-status" class="hint" style="margin-left:8px"></span>
+    </div>` : ''}
+    <div class="col-picker-group">
+      <div class="col-picker-title">🎯 Bộ lọc phân loại theo từ khóa (nâng cao) <span class="hint">— vd câu hỏi chứa "chuẩn" thì luôn lọc cứng cột LoaiXetTuyen == "Chuan", tránh model quên lọc</span></div>
+      <div id="${prefix}-catfilters-rows"></div>
+      <button type="button" style="margin-top:6px" onclick="addCatFilterRow('${prefix}', window['${prefix}DistinctValues']||{})">+ Thêm dòng lọc</button>
+    </div>
+    <label style="display:block;margin:10px 0 4px">Hướng dẫn riêng cho chatbot khi trả lời từ bảng này (tuỳ chọn)</label>
+    <textarea id="${prefix}-extra-instructions" placeholder="vd: Điểm chuẩn theo thang 30, chỉ áp dụng từ năm 2024 trở đi." style="width:100%;min-height:40px;padding:6px 8px;border:1px solid var(--border);border-radius:5px;font-family:inherit">${escHtml(existing.extra_instructions||'')}</textarea>`;
+
+  document.getElementById(`${prefix}-columns-pickers`).innerHTML =
+    _pickerGroupHtml(prefix, 'name-cols', '🏷️ Cột "tên đối tượng"', '(bắt buộc ≥1 — để chatbot tra được theo tên người/thực thể)', cols, suggestName)
+    + _pickerGroupHtml(prefix, 'role-cols', '💼 Cột chức vụ/vai trò', '(tuỳ chọn — để hỏi "X là ai" không cần nêu tên)', cols, existing.role_columns)
+    + _pickerGroupHtml(prefix, 'group-cols', '🏢 Cột đơn vị/nhóm', '(tuỳ chọn — để hỏi "đơn vị Y gồm những ai")', cols, existing.group_columns)
+    + _pickerGroupHtml(prefix, 'disamb-cols', '🔀 Cột phân biệt bản ghi', '(tuỳ chọn — nếu 1 thực thể có NHIỀU dòng, vd theo năm/phương thức xét tuyển, LUÔN kèm cột này khi trả số liệu để không mập mờ)', cols, existing.disambiguating_columns)
+    + _pickerGroupHtml(prefix, 'pii-cols', '🔒 Cột PII cần ẩn khi trả lời', '(email, SĐT, địa chỉ... — không hiện ra khi chatbot trả lời)', cols, suggestPii)
+    + _pickerGroupHtml(prefix, 'hidden-cols', '🚫 Cột nhiễu, không hiển thị', '(cột lỗi/rác, vd "Unnamed: 2")', cols, suggestHidden);
+
+  window[`${prefix}DistinctValues`] = distinctValues;
+  document.getElementById(`${prefix}-catfilters-rows`).innerHTML = '';
+  const existingCF = existing.categorical_filters || {};
+  const grouped = {};
+  Object.entries(existingCF).forEach(([col, kwMap]) => {
+    Object.entries(kwMap).forEach(([kw, val]) => {
+      const k = col + '\u0000' + val;
+      grouped[k] = grouped[k] || {col, val, kws: []};
+      grouped[k].kws.push(kw);
+    });
+  });
+  Object.values(grouped).forEach(g => addCatFilterRow(prefix, distinctValues, g.col, g.val, g.kws.join(', ')));
+}
+
+function onMetaHasRagChange(prefix){
+  const wrap = document.getElementById(`${prefix}-recheck-wrap`);
+  if(wrap) wrap.style.display = document.getElementById(`${prefix}-has-rag`).checked ? 'block' : 'none';
+}
+
+function collectMetadataFrom(prefix){
+  const val = key => Array.from(document.querySelectorAll(`#${prefix}-${key} input:checked`)).map(el => el.value);
+  return {
+    description: document.getElementById(`${prefix}-description`).value.trim(),
+    name_columns: val('name-cols'),
+    role_columns: val('role-cols'),
+    group_columns: val('group-cols'),
+    disambiguating_columns: val('disamb-cols'),
+    pii_columns: val('pii-cols'),
+    hidden_columns: val('hidden-cols'),
+    categorical_filters: collectCatFilters(prefix),
+    has_related_text_corpus: document.getElementById(`${prefix}-has-rag`).checked,
+    extra_instructions: document.getElementById(`${prefix}-extra-instructions`).value.trim(),
+  };
+}
+
+async function recheckCrossRag(){
+  const meta = collectMetadataFrom('csvmeta');
+  if(!meta.name_columns.length){
+    alert('Chọn ít nhất 1 cột "tên đối tượng" trước khi kiểm tra chéo với RAG.');
+    return;
+  }
+  const status = document.getElementById('csvmeta-recheck-status');
+  status.innerHTML = '<span class="spinner"></span>Đang kiểm tra...';
+  const c = getCfg();
+  let jobId;
+  try{
+    const r = await fetch(c.adminUrl + '/admin/recheck-cross-rag', {
+      method: 'POST', headers: {'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({table_name: csvAnalyzeResult.table_name, staging_token: csvAnalyzeResult.staging_token,
+                            name_columns: meta.name_columns, role_columns: meta.role_columns, group_columns: meta.group_columns})
+    });
+    const data = await r.json();
+    if(!r.ok || !data.job_id){ status.textContent = '❌ ' + (data.error||r.status); return; }
+    jobId = data.job_id;
+  }catch(e){ status.textContent = '❌ ' + e.message; return; }
+
+  pollJobRaw(jobId, (jobData) => {
+    if(jobData.status !== 'done') { status.innerHTML = `<span class="spinner"></span>Đang chạy... (${(jobData.log||[]).length} dòng log)`; return; }
+    if(jobData.ok && jobData.result && jobData.result.ok){
+      const found = jobData.result.canh_bao_cheo || [];
+      status.textContent = found.length ? `⚠️ Tìm thấy ${found.length} cảnh báo chéo — xem bên dưới.` : '✅ Không có cảnh báo chéo với RAG.';
+      csvAnalyzeResult.canh_bao_cheo = found;
+      csvCheoActions = {};
+      found.forEach(cb => { csvCheoActions[cb.warning_id] = {action: 'giu_rag', noi_dung_moi: ''}; });
+      document.getElementById('csv-cheo-section').style.display = found.length ? 'block' : 'none';
+      renderCheoList(found);
+    } else {
+      status.textContent = '❌ Lỗi khi kiểm tra, xem log job.';
+    }
+  });
+}
+
+function renderCheoList(items){
+  const cheoList = document.getElementById('csv-cheo-list');
+  cheoList.innerHTML = items.map(cb => `
+      <div class="decision-row" data-warning-id="${cb.warning_id}">
+        <div class="drow-title">Đối tượng: "${escHtml(cb.ten_thuc_the)}" — thuộc tính: ${escHtml(cb.cot)}</div>
+        <div class="drow-diff">Giá trị SẮP lưu vào bảng: <span class="new-val">${escHtml(cb.gia_tri_bang_moi)}</span></div>
+        <div class="drow-diff">Văn bản "${escHtml(cb.nguon_van_ban||'')}" đang nói: <span class="old-val">${escHtml(cb.gia_tri_van_ban)}</span></div>
+        <div class="hint" style="margin-top:4px">Trích dẫn: "${escHtml(cb.trich_dan||'')}"</div>
+        <details style="margin-top:4px"><summary class="hint" style="cursor:pointer">Xem toàn văn đoạn RAG</summary>
+          <div class="hint" style="white-space:pre-wrap;margin-top:4px">${escHtml((cb.noi_dung_day_du||'').slice(0,1000))}</div></details>
+        <div class="decision-btns" data-kind="cheo" data-warning-id="${cb.warning_id}">
+          <button data-action="giu_rag" class="active">Giữ đoạn RAG</button>
+          <button data-action="loai_rag">Loại đoạn RAG</button>
+          <button data-action="sua_rag">Sửa đoạn RAG</button>
+          <button data-action="sua_bang">Sửa giá trị bảng theo văn bản</button>
+        </div>
+        <textarea placeholder="Nội dung đoạn RAG đã sửa..." style="display:none"></textarea>
+      </div>`).join('');
+  cheoList.querySelectorAll('.decision-row').forEach(row => {
+    const wid = parseInt(row.dataset.warningId);
+    const ta = row.querySelector('textarea');
+    row.querySelectorAll('.decision-btns button').forEach(btn => {
+      btn.onclick = () => {
+        const action = btn.dataset.action;
+        csvCheoActions[wid].action = action;
+        row.querySelectorAll('.decision-btns button').forEach(b => b.classList.toggle('active', b === btn));
+        ta.style.display = action === 'sua_rag' ? 'block' : 'none';
+      };
+    });
+    ta.addEventListener('input', () => { csvCheoActions[wid].noi_dung_moi = ta.value; });
+  });
+}
+
+function bulkSetThayDoi(action){
+  document.querySelectorAll('.decision-btns[data-kind="thaydoi"]').forEach(box => {
+    const rid = parseInt(box.dataset.rowId);
+    csvThayDoiActions[rid] = action;
+    box.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.action === action));
+  });
+}
+
+async function applyStructuredDecisions(){
+  if(!csvAnalyzeResult) return;
+  const r = csvAnalyzeResult;
+  let metadata = null;
+  if(r.bang_moi){
+    metadata = collectMetadataFrom('csvmeta');
+    if(!metadata.description){ alert('Nhập mô tả bảng trước (chatbot dùng cái này để biết khi nào nên tra bảng này).'); return; }
+    if(!metadata.name_columns.length && !confirm('Bạn chưa chọn cột "tên đối tượng" — chatbot sẽ KHÔNG tra được bảng này theo tên người/thực thể. Vẫn tiếp tục?')) return;
+  }
+  const decisions = {
+    staging_token: r.staging_token, key_cols: r.key_cols,
+    thay_doi_decisions: r.thay_doi.map(item => Object.assign({}, item, {action: csvThayDoiActions[item.row_id]})),
+    canh_bao_cheo_decisions: r.canh_bao_cheo.map(cb => Object.assign({}, cb, {
+      action: csvCheoActions[cb.warning_id].action,
+      noi_dung_moi: csvCheoActions[cb.warning_id].noi_dung_moi,
+    })),
+  };
+  if(metadata) decisions.metadata = metadata;
+  if(!confirm(`Xác nhận ghi ${r.so_moi} dòng mới + áp dụng ${r.thay_doi.length} quyết định thay đổi `
+             + `+ ${r.canh_bao_cheo.length} quyết định cảnh báo chéo vào production bảng "${r.table_name}"?`)) return;
+
+  const logEl = document.getElementById('csv-apply-log');
+  logEl.style.display = 'block'; logEl.textContent = '';
+  setJobStatusEl('csv-apply-status', 'queued', null, 'áp dụng');
+  const c = getCfg();
+  let jobId;
+  try{
+    const rr = await fetch(c.adminUrl + '/admin/apply-structured-decisions', {
+      method: 'POST', headers: {'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({table_name: r.table_name, decisions})
+    });
+    const data = await rr.json();
+    if(!rr.ok || !data.job_id){
+      logEl.textContent = '❌ ' + (data.error||rr.status);
+      setJobStatusEl('csv-apply-status', 'done', false, 'áp dụng');
+      return;
+    }
+    jobId = data.job_id;
+  }catch(e){
+    logEl.textContent = '❌ ' + e.message;
+    setJobStatusEl('csv-apply-status', 'done', false, 'áp dụng');
+    return;
+  }
+
+  pollTableJob(jobId, 'csv-apply-log', 'csv-apply-status', 'áp dụng', (data) => {
+    if(data.ok && data.result && data.result.ok){
+      logEl.textContent += `\n\n✅ Hoàn tất: ${JSON.stringify(data.result, null, 2)}`;
+      document.getElementById('csv-review').style.display = 'none';
+      csvAnalyzeResult = null;
+    }
+    loadTables();
+  });
+}
+
+// ============ TEST CASES ============
+function setConflictOutput(txt){ document.getElementById('conflict-output').textContent = txt; }
+let allTestCases = [];
+
+async function loadTestCases(){
+  const c = getCfg(); const box = document.getElementById('test-cases-list');
+  box.innerHTML = '<p class="hint"><span class="spinner"></span>Đang tải...</p>';
+  try{
+    const r = await fetch(c.adminUrl + '/admin/test-cases', {headers:{'X-API-Key': c.apiKey}});
+    const data = await r.json();
+    if(!r.ok){ box.innerHTML = '<p class="hint">❌ ' + escHtml(data.error||r.status) + '</p>'; return; }
+    allTestCases = data.cases || [];
+    document.getElementById('test-case-count').textContent = `(${allTestCases.length} case)`;
+    if(!allTestCases.length){ box.innerHTML = '<p class="hint">' + escHtml(data.note||'Chưa có test case nào') + '</p>'; return; }
+    box.innerHTML = allTestCases.map(tc => `
+      <div class="test-case-card">
+        <div class="tc-name">🧪 ${escHtml(tc.name)}</div>
+        <div class="tc-desc">${escHtml(tc.description||'')}</div>
+        <div class="tc-steps">${tc.steps.length} bước: ${tc.steps.map(s => escHtml(s.base_name)).join(' → ')}</div>
+
+        <details class="tc-step-block" style="margin-top:10px">
+          <summary>📄 Xem nội dung Markdown của ${tc.steps.length} bước test</summary>
+          ${tc.steps.map((s, i) => `
+            <div style="padding:8px 14px;background:#f1f5f9;font-size:12px;font-weight:600;border-top:1px solid var(--border)">
+              ${i+1}. <code>${escHtml(s.base_name)}</code>
+            </div>
+            <div class="tc-step-body">${escHtml(s.md || '(không có nội dung)')}</div>
+            ${s.stdin ? `<div class="tc-stdin">stdin (auto trả lời prompt): ${escHtml(JSON.stringify(s.stdin))}</div>` : ''}
+          `).join('')}
+        </details>
+
+        <div class="tc-actions">
+          <button class="btn-primary" data-act="run-test-case" data-id="${escHtml(tc.id)}">▶ Chạy</button>
+          <button data-act="verify-test-case" data-id="${escHtml(tc.id)}">💬 Verify chatbot</button>
+        </div>
+      </div>`).join('');
+  }catch(e){ box.innerHTML = '<p class="hint">❌ ' + escHtml(e.message) + '</p>'; }
+}
+
+
+function verifyTestCase(id){
+  const tc = allTestCases.find(x => x.id === id);
+  if(!tc || !tc.verify_question) return;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelector('.tab-btn[data-tab="chat"]').classList.add('active');
+  document.getElementById('tab-chat').classList.add('active');
+  setTimeout(() => {
+    document.getElementById('chat-input').value = tc.verify_question;
+    sendChat(new Event('submit'));
+  }, 100);
+}
+
+async function loadPending(){
+  const c = getCfg(); const box = document.getElementById('pending-list');
+  box.innerHTML = '<p class="hint"><span class="spinner"></span>Đang tải pending...</p>';
+  try{
+    const r = await fetch(c.adminUrl + '/admin/pending', {headers:{'X-API-Key': c.apiKey}});
+    const data = await r.json();
+    const out = (data.stdout||'').trim();
+    const m = out.match(/^\s*-\s+(.+)$/gm);
+    if(!m || !m.length){ box.innerHTML = '<p class="hint">Không có tài liệu chờ xung đột.</p>'; return; }
+    // [FIX] conflict_detection.py list-pending giờ thêm nhãn " (mới)" / " (đã
+    // sửa - cần rà soát lại)" cuối mỗi dòng (xem list_docs_needing_recheck())
+    // để phân biệt 2 loại - phải tách nhãn khỏi base_name thật, nếu không sẽ
+    // gọi /admin/check-conflict với base_name sai (dính luôn cả nhãn).
+    const items = m.map(l => {
+      const raw = l.replace(/^\s*-\s+/,'').trim();
+      const mm = raw.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+      return mm ? {name: mm[1], label: mm[2]} : {name: raw, label: ''};
+    });
+    box.innerHTML = items.map(({name:n, label}) => `
+      <div class="file-row">
+        <span class="name" data-act="open-detail" data-bn="${escHtml(n)}" data-ft="md">${escHtml(n)}</span>
+        ${label ? `<span class="badge${label.startsWith('đã sửa')?' prod':' step'}">${escHtml(label)}</span>` : ''}
+        <div class="actions">
+          <button data-act="open-detail" data-bn="${escHtml(n)}" data-ft="md">📝 Chi tiết</button>
+          <button class="btn-warn" data-act="check-conflict" data-bn="${escHtml(n)}">⚠️ Check</button>
+        </div>
+      </div>`).join('');
+  }catch(e){ box.innerHTML = '<p class="hint">❌ ' + escHtml(e.message) + '</p>'; }
+}
+
+async function loadConflictStatus(){
+  setConflictOutput('⏳ Đang tải status...');
+  const c = getCfg();
+  try{
+    const r = await fetch(c.adminUrl + '/admin/status', {headers:{'X-API-Key': c.apiKey}});
+    const data = await r.json();
+    setConflictOutput((data.stdout||'') + (data.stderr ? '\n--- STDERR ---\n'+data.stderr : ''));
+  }catch(e){ setConflictOutput('❌ ' + e.message); }
+}
+
+// ============ LOG HELPERS cho tab Test ============
+function setTestLog(txt){
+  const el = document.getElementById('test-log');
+  if(el){ el.textContent = txt; el.scrollTop = el.scrollHeight; }
+}
+function getTestLog(){ return document.getElementById('test-log')?.textContent || ''; }
+function clearTestLog(){
+  setTestLog('(chưa có log)');
+  const st = document.getElementById('test-log-status');
+  if(st){ st.textContent = 'chưa chạy'; st.style.color = 'var(--muted)'; }
+}
+function setTestLogStatus(status, ok, step){
+  const st = document.getElementById('test-log-status');
+  if(!st) return;
+  if(status === 'running' || status === 'queued'){
+    st.innerHTML = `<span class="spinner"></span> ${step||''}: đang chạy...`;
+    st.style.color = 'var(--primary)';
+  } else if(status === 'done'){
+    st.textContent = `${step||''}: ${ok ? '✅ xong' : '❌ thất bại'}`;
+    st.style.color = ok ? 'var(--success)' : 'var(--danger)';
+  }
+}
+
+/**
+ * Poll /admin/job/<id> mỗi 800ms, ghi dần log vào #test-log.
+ * onDone(result, ok) được gọi khi job xong (status = 'done').
+ */
+async function pollJobAndStream(jobId, stepLabel, onDone){
+  const c = getCfg();
+  let fromIdx = 0;
+  const allLines = [];
+  setTestLog('');
+
+  async function tick(){
+    try{
+      const r = await fetch(`${c.adminUrl}/admin/job/${jobId}?from=${fromIdx}`,
+                            {headers:{'X-API-Key': c.apiKey}});
+      if(!r.ok){
+        allLines.push(`[Polling lỗi HTTP ${r.status}]`);
+        setTestLog(allLines.join('\n'));
+        return;
+      }
+      const data = await r.json();
+      if(data.log && data.log.length){
+        for(const ln of data.log) allLines.push(ln);
+        fromIdx = data.log_total;
+        setTestLog(allLines.join('\n'));
+      }
+      setTestLogStatus(data.status, data.ok, stepLabel);
+
+      if(data.status === 'done'){
+        if(typeof onDone === 'function') onDone(data.result, data.ok);
+        return;
+      }
+      setTimeout(tick, 800);
+    }catch(e){
+      allLines.push('[Polling exception] ' + e.message);
+      setTestLog(allLines.join('\n'));
+      setTestLogStatus('done', false, stepLabel);
+    }
+  }
+  tick();
+}
+
+
+// ============ RESET TEST (job-based) ============
+async function resetAllTest(){
+  if(!confirm('🔄 RESET TOÀN BỘ TEST?\n\n' +
+              'Nếu đã bấm 📸 Snapshot trước khi test: khôi phục TOÀN BỘ (văn bản + bảng cấu trúc + registry.json) về đúng lúc chụp.\n' +
+              'Nếu CHƯA Snapshot: chỉ dọn được văn bản test_*, KHÔNG hoàn tác được thay đổi trên bảng .csv.\n\n' +
+              'Có thể mất 5-15 phút. Log sẽ chạy real-time bên dưới.\nTiếp tục?')) return;
+
+  const c = getCfg();
+  setTestLog('⏳ Đang khởi động job...');
+  setTestLogStatus('queued', null, 'reset');
+
+  let jobId;
+  try{
+    const r = await fetch(c.adminUrl + '/admin/reset-test', {
+      method:'POST', headers:{'X-API-Key': c.apiKey}
+    });
+    const data = await r.json();
+    if(!r.ok || !data.job_id){
+      setTestLog('❌ ' + (data.error || ('HTTP ' + r.status)));
+      setTestLogStatus('done', false, 'reset');
+      return;
+    }
+    jobId = data.job_id;
+  }catch(e){
+    setTestLog('❌ ' + e.message);
+    setTestLogStatus('done', false, 'reset');
+    return;
+  }
+
+  pollJobAndStream(jobId, 'reset', (result, ok) => {
+    if(ok && result){
+      let extra = `\n\n✅ Reset xong.\n`;
+      if(result.removed_files && result.removed_files.length){
+        extra += `Đã xóa thêm ${result.removed_files.length} file tạm:\n` +
+                 result.removed_files.map(x => '  - ' + x).join('\n') + '\n';
+      }
+      setTestLog(getTestLog() + extra);
+    }
+    loadPending();
+    loadFiles();
+  });
+}
+
+
+// ============ RUN TEST CASE (job-based) ============
+async function runTestCase(id){
+  const tc = allTestCases.find(x => x.id === id);
+  if(!tc) return;
+  if(!confirm(`Chạy test case "${tc.name}"?\n\nLog sẽ chạy real-time bên dưới.`)) return;
+
+  const c = getCfg();
+  setTestLog(`⏳ Đang khởi động job cho [${id}] ${tc.name}...`);
+  setTestLogStatus('queued', null, 'test-case');
+  document.getElementById('test-log')?.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  let jobId;
+  try{
+    const r = await fetch(c.adminUrl + '/admin/run-test-case', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({id})
+    });
+    const data = await r.json();
+    if(!r.ok || !data.job_id){
+      setTestLog('❌ ' + (data.error || ('HTTP ' + r.status)));
+      setTestLogStatus('done', false, 'test-case');
+      return;
+    }
+    jobId = data.job_id;
+  }catch(e){
+    setTestLog('❌ ' + e.message);
+    setTestLogStatus('done', false, 'test-case');
+    return;
+  }
+
+  pollJobAndStream(jobId, `test-case ${id}`, (result, ok) => {
+    if(!result){ return; }
+
+    // Ghi phần tổng hợp vào #conflict-output như trước
+    let out = `=== TEST ${id} — ${result.case_name} ===\n\n`;
+    for(const l of (result.logs || [])){
+      out += `▶ [${l.base_name}] rc=${l.returncode}\n${l.stdout || ''}\n`;
+      if(l.stderr) out += 'STDERR:\n' + l.stderr + '\n';
+      out += '─'.repeat(50) + '\n\n';
+    }
+    out += `\n💬 Verify: ${result.verify_question || '-'}\n`;
+    out += `✅ Kỳ vọng: ${result.expected_answer || '-'}\n`;
+    setConflictOutput(out);
+
+    loadPending();
+  });
+}
+async function takeSnapshot(){
+  const label = prompt('Nhãn snapshot:', 'before_test');
+  if(!label) return;
+  setConflictOutput(`⏳ Snapshot "${label}"...`);
+  const c = getCfg();
+  try{
+    const r = await fetch(c.adminUrl + '/admin/snapshot', {
+      method:'POST', headers:{'Content-Type':'application/json', 'X-API-Key': c.apiKey},
+      body: JSON.stringify({label})
+    });
+    const data = await r.json();
+    setConflictOutput((data.ok?'✅':'❌') + ' [snapshot]\n\n' + (data.stdout||'') + (data.stderr||''));
+  }catch(e){ setConflictOutput('❌ ' + e.message); }
+}
+
+// ============ INIT ============
+loadCfgToUI();
+loadFiles();
+loadPendingCrossConflicts();
+</script>
+</body>
+</html>

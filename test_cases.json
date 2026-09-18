@@ -1,0 +1,187 @@
+[
+  {
+    "id": "A1",
+    "name": "A1 — Không có ứng viên (tri thức hoàn toàn mới)",
+    "description": "Văn bản hoàn toàn mới, không trùng gì trong production.",
+    "steps": [
+      {
+        "base_name": "test_a1_moi",
+        "md": "# Trung tâm Đổi mới sáng tạo TEST\n\nTrung tâm Đổi mới sáng tạo TEST được thành lập ngày 01/01/2024, trực thuộc Khoa Công nghệ TEST, chuyên hỗ trợ sinh viên khởi nghiệp.",
+        "stdin": "y\n"
+      }
+    ],
+    "verify_question": "Trung tâm Đổi mới sáng tạo TEST được thành lập ngày nào?",
+    "expected_answer": "01/01/2024"
+  },
+  {
+    "id": "A2a",
+    "name": "A2a — Trùng tuyệt đối → Thay thế toàn bộ",
+    "description": "Bản sao y hệt, chọn thay thế bản cũ.",
+    "steps": [
+      {
+        "base_name": "test_a2a_goc",
+        "md": "# Quy định học bổng Khoa Công nghệ TEST\n\nSinh viên đạt học lực Xuất sắc được nhận học bổng khuyến khích học tập TEST trị giá 5.000.000 đồng/kỳ.",
+        "stdin": "y\n"
+      },
+      {
+        "base_name": "test_a2a_dup",
+        "md": "# Quy định học bổng Khoa Công nghệ TEST\n\nSinh viên đạt học lực Xuất sắc được nhận học bổng khuyến khích học tập TEST trị giá 5.000.000 đồng/kỳ.",
+        "stdin": "y\ny\n"
+      }
+    ],
+    "verify_question": "Học bổng khuyến khích học tập TEST trị giá bao nhiêu?",
+    "expected_answer": "5.000.000"
+  },
+  {
+    "id": "A2b",
+    "name": "A2b — Trùng tuyệt đối → Giữ bản cũ",
+    "description": "Không thay thế, giữ nguyên bản cũ.",
+    "steps": [
+      {
+        "base_name": "test_a2b_goc",
+        "md": "# Quy định học bổng TEST-A2B\n\nHọc bổng TEST-A2B là 3.000.000 đồng/kỳ.",
+        "stdin": "y\n"
+      },
+      {
+        "base_name": "test_a2b_dup",
+        "md": "# Quy định học bổng TEST-A2B\n\nHọc bổng TEST-A2B là 3.000.000 đồng/kỳ.",
+        "stdin": "n\ny\n"
+      }
+    ],
+    "verify_question": "Học bổng TEST-A2B bao nhiêu tiền?",
+    "expected_answer": "3.000.000"
+  },
+  {
+    "id": "B1",
+    "name": "B1 — Thay thế toàn bộ FILE (nhân sự thay đổi)",
+    "description": "Văn bản mới cập nhật cùng thực thể, chọn thay thế toàn bộ file.",
+    "steps": [
+      {
+        "base_name": "test_b1_v1",
+        "md": "# Ban chủ nhiệm Khoa Công nghệ TEST\n\nÔng Trần Văn Test giữ chức Trưởng khoa TEST từ 2018.\nBà Lê Thị Test giữ chức Phó trưởng khoa TEST từ 2019.\nKhoa có 5 bộ môn trực thuộc.",
+        "stdin": "y\n"
+      },
+      {
+        "base_name": "test_b1_v2",
+        "md": "# Ban chủ nhiệm Khoa Công nghệ TEST (kiện toàn 2024)\n\nÔng Phạm Văn Test giữ chức Trưởng khoa TEST từ 2024, thay ông Trần Văn Test.\nBà Nguyễn Thị Test giữ chức Phó trưởng khoa TEST từ 2024.\nKhoa hiện có 7 bộ môn trực thuộc.",
+        "stdin": "y\ny\n"
+      }
+    ],
+    "verify_question": "Ai đang là Trưởng khoa Công nghệ TEST?",
+    "expected_answer": "Phạm Văn Test"
+  },
+  {
+    "id": "B2",
+    "name": "B2 — Giữ 2 phiên bản song song (2 phòng lab khác nhau)",
+    "description": "Hai văn bản về 2 thực thể khác nhau, giữ song song.",
+    "steps": [
+      {
+        "base_name": "test_b2_v1",
+        "md": "# Nội quy phòng Lab AI Khoa Công nghệ TEST\n\nPhòng Lab AI TEST mở cửa 8h-17h các ngày trong tuần, phục vụ sinh viên năm 3-4.",
+        "stdin": "y\n"
+      },
+      {
+        "base_name": "test_b2_v2",
+        "md": "# Nội quy phòng Lab Robotics Khoa Công nghệ TEST\n\nPhòng Lab Robotics TEST mở cửa 8h-20h các ngày trong tuần, phục vụ sinh viên năm 2-4.",
+        "stdin": "n\ny\ny\n"
+      }
+    ],
+    "verify_question": "Lab AI TEST và Lab Robotics TEST mở cửa giờ nào?",
+    "expected_answer": "8h-17h và 8h-20h"
+  },
+  {
+    "id": "C1",
+    "name": "C1 — bo_sung (bổ sung thông tin, tự động duyệt)",
+    "description": "Đoạn mới chỉ bổ sung, không phủ định → tự động duyệt.",
+    "steps": [
+      {
+        "base_name": "test_c1_v1",
+        "md": "# Chương trình đào tạo ngành CNTT TEST\n\nChương trình đào tạo ngành CNTT TEST có tổng 130 tín chỉ.",
+        "stdin": "y\n"
+      },
+      {
+        "base_name": "test_c1_v2",
+        "md": "# Chương trình đào tạo ngành CNTT TEST\n\nChương trình đào tạo ngành CNTT TEST có tổng 130 tín chỉ, bao gồm 20 tín chỉ thực tập doanh nghiệp bắt buộc trong học kỳ cuối (áp dụng từ khóa tuyển sinh 2024 trở đi).",
+        "stdin": "n\nn\ny\n"
+      }
+    ],
+    "verify_question": "Ngành CNTT TEST có yêu cầu thực tập doanh nghiệp không?",
+    "expected_answer": "Có, 20 tín chỉ, học kỳ cuối"
+  },
+  {
+    "id": "C2",
+    "name": "C2 — khac_thoi_diem_pham_vi (học phí 2 năm)",
+    "description": "Học phí khác nhau theo năm học → không phải xung đột thực sự.",
+    "steps": [
+      {
+        "base_name": "test_c2_v1",
+        "md": "# Học phí ngành CNTT TEST\n\nHọc phí ngành CNTT TEST năm học 2023-2024 là 22.000.000 đồng/năm, áp dụng từ 01/08/2023 đến hết 31/07/2024.",
+        "stdin": "y\n"
+      },
+      {
+        "base_name": "test_c2_v2",
+        "md": "# Học phí ngành CNTT TEST\n\nHọc phí ngành CNTT TEST năm học 2024-2025 là 25.000.000 đồng/năm, áp dụng từ 01/08/2024.",
+        "stdin": "n\nn\ny\n"
+      }
+    ],
+    "verify_question": "Học phí ngành CNTT TEST hiện tại là bao nhiêu?",
+    "expected_answer": "25.000.000 (nếu chưa tích hợp valid_from/valid_to vào api8923, có thể trả lời trộn 2 mức)"
+  },
+  {
+    "id": "C3a",
+    "name": "C3a — khac_gia_tri (thay thế đoạn)",
+    "description": "Sức chứa hội trường thay đổi, chọn thay thế ở cấp đoạn.",
+    "steps": [
+      {
+        "base_name": "test_c3a_v1",
+        "md": "# Sức chứa Hội trường A Khoa Công nghệ TEST\n\nHội trường A Khoa Công nghệ TEST có sức chứa 300 chỗ ngồi.",
+        "stdin": "y\n"
+      },
+      {
+        "base_name": "test_c3a_v2",
+        "md": "# Sức chứa Hội trường A Khoa Công nghệ TEST\n\nHội trường A Khoa Công nghệ TEST có sức chứa 450 chỗ ngồi.",
+        "stdin": "n\nn\ny\ny\n"
+      }
+    ],
+    "verify_question": "Hội trường A Khoa Công nghệ TEST sức chứa bao nhiêu?",
+    "expected_answer": "450"
+  },
+  {
+    "id": "C4",
+    "name": "C4 — mau_thuan (IELTS bắt buộc vs không bắt buộc)",
+    "description": "Hai quy định loại trừ nhau, chọn thay thế đoạn.",
+    "steps": [
+      {
+        "base_name": "test_c4_v1",
+        "md": "# Điều kiện tốt nghiệp ngành CNTT TEST\n\nSinh viên ngành CNTT TEST BẮT BUỘC phải có chứng chỉ IELTS 6.0 trở lên mới được xét tốt nghiệp.",
+        "stdin": "y\n"
+      },
+      {
+        "base_name": "test_c4_v2",
+        "md": "# Điều kiện tốt nghiệp ngành CNTT TEST\n\nSinh viên ngành CNTT TEST KHÔNG cần chứng chỉ ngoại ngữ quốc tế nào để xét tốt nghiệp, chỉ cần hoàn thành học phần Tiếng Anh trong chương trình.",
+        "stdin": "n\nn\ny\ny\n"
+      }
+    ],
+    "verify_question": "Ngành CNTT TEST có bắt buộc IELTS để tốt nghiệp không?",
+    "expected_answer": "Không bắt buộc"
+  },
+  {
+    "id": "C5",
+    "name": "C5 — khong_du_thong_tin (Hàn Quốc vs Nhật Bản)",
+    "description": "Mơ hồ, không rõ là 2 định hướng song song hay bản cập nhật.",
+    "steps": [
+      {
+        "base_name": "test_c5_v1",
+        "md": "# Định hướng hợp tác quốc tế Khoa Công nghệ TEST\n\nKhoa Công nghệ TEST đang xúc tiến hợp tác với một số đại học tại Hàn Quốc.",
+        "stdin": "y\n"
+      },
+      {
+        "base_name": "test_c5_v2",
+        "md": "# Định hướng hợp tác quốc tế Khoa Công nghệ TEST\n\nKhoa Công nghệ TEST đang xúc tiến hợp tác với một số đại học tại Nhật Bản.",
+        "stdin": "n\nn\ny\ny\n"
+      }
+    ],
+    "verify_question": "Khoa Công nghệ TEST hợp tác với đại học ở đâu?",
+    "expected_answer": "Tùy LLM phân loại; quan sát log xem có nhãn UNCERTAIN hay không"
+  }
+]

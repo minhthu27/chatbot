@@ -1,0 +1,15 @@
+flask
+flask-cors
+python-dotenv
+pandas
+numpy
+langchain-core
+langchain-community
+langchain-ollama
+langchain-experimental
+faiss-cpu
+openai
+python-docx
+pdf2image
+tabulate
+openpyxl
