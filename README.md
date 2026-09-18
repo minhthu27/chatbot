@@ -391,7 +391,7 @@ python admin_api.py
    trong `conflict_detection.py` có lọc cứng thêm theo mẫu `.bak_` để phòng
    sai sót tương tự ở các script khác, nhưng cách phòng CHẮC CHẮN vẫn là
    không bao giờ tạo backup vào thư mục bị quét.
-9. ** Snapshot/ Reset test (mục 6b) hoàn tác được CẢ bảng cấu trúc**,
+9. **Snapshot/ Reset test (mục 6b) hoàn tác được CẢ bảng cấu trúc**,
    không chỉ dữ liệu RAG — bất kỳ cơ chế "test" mới thêm sau này (vd 1 loại
    dữ liệu thứ 3) đều nên nối vào đúng 2 hàm `snapshot_production()`/
    `restore_snapshot()` trong `conflict_detection.py` để giữ tính nhất quán
